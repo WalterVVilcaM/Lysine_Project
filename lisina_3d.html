@@ -1,0 +1,2404 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Lisina 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lab bench — the 3D stage fills the left, a spec sheet for the molecule sits on the right; stacks on phones. */
+:root {
+  --bg: #e9eef1;
+  --stage: #f6f8f9;
+  --panel: #ffffff;
+  --fg: #13212b;
+  --muted: #5a6a76;
+  --line: #d3dce2;
+  --accent: #0b7480;
+  --accent-soft: #d5ecee;
+  --danger: #b4291c;
+  --mirror: #7a3fc4;
+  --hbond: #b7700a;
+  --el-C: #3d454c;
+  --el-H: #e8ecef;
+  --el-N: #2c5bd0;
+  --el-O: #d03a2e;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1318; --stage: #070c10; --panel: #121c23; --fg: #e3ebf0; --muted: #8d9daa;
+    --line: #23323c; --accent: #45c2cc; --accent-soft: #11343a; --danger: #ff8a7a; --mirror: #b693f5; --hbond: #f0b440;
+    --el-C: #98a2ab; --el-H: #eef2f4; --el-N: #5d88f0; --el-O: #f0594b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1318; --stage: #070c10; --panel: #121c23; --fg: #e3ebf0; --muted: #8d9daa;
+  --line: #23323c; --accent: #45c2cc; --accent-soft: #11343a; --danger: #ff8a7a; --mirror: #b693f5; --hbond: #f0b440;
+  --el-C: #98a2ab; --el-H: #eef2f4; --el-N: #5d88f0; --el-O: #f0594b;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+}
+.app {
+  height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px;
+  padding-block: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+}
+.stage {
+  position: relative; min-width: 0; min-height: 0; border-radius: 14px; overflow: hidden;
+  background: var(--stage); border: 1px solid var(--line);
+}
+#gl { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+#gl.dragging { cursor: grabbing; }
+#gl.hovering { cursor: pointer; }
+#gl.measuring, #gl.measuring.hovering { cursor: crosshair; }
+.mhint {
+  position: absolute; top: 74px; left: 50%; transform: translateX(-50%); z-index: 2; pointer-events: none; white-space: nowrap;
+  font-size: 12.5px; color: var(--fg); background: var(--panel); border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--line));
+  border-radius: 999px; padding: 4px 12px; box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+.mtag {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--panel); background: var(--accent);
+  border-radius: 6px; padding: 1px 7px; will-change: transform;
+}
+.labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lbl {
+  position: absolute; left: 0; top: 0; font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  color: var(--fg); background: color-mix(in srgb, var(--panel) 82%, transparent);
+  border: 1px solid var(--line); padding: 0 5px; border-radius: 5px; white-space: nowrap;
+  transform: translate(-50%, -50%); will-change: transform;
+}
+.tag3d {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); white-space: nowrap; text-align: center;
+  font-family: var(--font-body); font-size: 12px; color: var(--muted); background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line); border-radius: 10px; padding: 4px 10px; will-change: transform;
+}
+.tag3d b { display: block; font-family: var(--font-display); font-size: 20px; line-height: 1.1; color: var(--fg); }
+.tag3d.L b { color: var(--accent); }
+.tag3d.compact { font-size: 0; padding: 2px 8px; }
+.tag3d.compact b { font-size: 18px; }
+.tag3d.D b { color: var(--mirror); }
+.pairs button { margin-top: 4px; }
+.lbl .q { color: var(--accent); font-weight: 600; margin-left: 1px; }
+.stage-head {
+  position: absolute; top: 14px; left: 16px; right: 16px; display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 12px; pointer-events: none; flex-wrap: wrap;
+}
+.stage-head h1 {
+  margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 3.2vw, 38px);
+  line-height: 1; letter-spacing: -0.02em; text-wrap: balance; min-width: 0; overflow-wrap: anywhere;
+}
+.stage-head h1 small { display: block; font-family: var(--font-body); font-weight: 500; font-size: 13px; letter-spacing: 0; color: var(--muted); margin-top: 6px; }
+.formula { font-family: var(--font-mono); font-size: 13px; color: var(--muted); text-align: right; }
+.formula b { color: var(--fg); font-weight: 500; font-size: 16px; display: block; }
+.toolbar {
+  position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: center; justify-content: space-between; pointer-events: none;
+}
+.toolbar > * { pointer-events: auto; }
+.seg {
+  display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px;
+}
+.seg button, .btn {
+  font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; border: 0;
+  padding: 6px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap;
+}
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.seg button:hover, .btn:hover { color: var(--fg); }
+.toggles { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.btn { background: var(--panel); border: 1px solid var(--line); }
+.btn[aria-pressed="true"] { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.btn.primary:hover { color: var(--panel); filter: brightness(1.08); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hint {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
+  font-size: 13px; color: var(--muted); opacity: 0; transition: opacity .4s;
+}
+.drop {
+  position: absolute; inset: 10px; border: 2px dashed var(--accent); border-radius: 12px; pointer-events: none;
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent); display: grid; place-items: center;
+  font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--accent); text-align: center; padding: 16px;
+}
+
+aside {
+  min-width: 0; min-height: 0; overflow-y: auto; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 20px;
+}
+.sec h2 {
+  margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+}
+/* ---- Molécula panel ---- */
+.sec-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 18px; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent); }
+.spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent-soft); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
+.src-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.src-title { flex: 1; min-width: 0; font-family: var(--font-display); font-size: 18px; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.open-sm {
+  flex: none; display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer;
+  color: var(--accent); background: var(--panel); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 8px; padding: 4px 9px;
+}
+.open-sm:hover { background: var(--accent-soft); }
+.open-sm svg { width: 15px; height: 15px; }
+.stats { display: flex; flex-wrap: wrap; gap: 5px; }
+.stats:empty { display: none; }
+.stats span { font-size: 12px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; white-space: nowrap; }
+.stats span b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.form-seg { align-self: flex-start; margin-top: 2px; }
+.alert .x { margin-left: auto; flex: none; font: inherit; font-size: 18px; line-height: 1; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 0 2px; }
+.alert .x:hover { color: var(--fg); }
+.now { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.now-txt { min-width: 0; display: flex; flex-direction: column; }
+.now-txt b { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.now-txt span { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.now output { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.player > input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
+.player .echart { margin: 0 0 0 30px; outline: none; border-radius: 4px; }
+.player .echart svg { height: 84px; }
+.player .echart-y { left: -30px; width: 26px; height: 84px; }
+.player .echart:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.transport { display: flex; justify-content: center; align-items: center; gap: 10px; }
+.mol { display: flex; flex-direction: column; gap: 10px; }
+.mol h2 { margin-bottom: 0; }
+.src-card {
+  display: flex; flex-direction: column; gap: 9px;
+  padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--accent-soft) 45%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+}
+.fmt {
+  grid-row: span 1; align-self: start; margin-top: 2px; font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; letter-spacing: .06em;
+  color: var(--accent); background: var(--panel); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  border-radius: 5px; padding: 2px 6px; white-space: nowrap;
+}
+.src-name { min-width: 0; }
+.src-name b { display: block; font-family: var(--font-display); font-size: 18px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.src-name span { color: var(--muted); font-size: 12.5px; }
+.back {
+  grid-column: 1 / -1; justify-self: start; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;
+  font: inherit; font-size: 12.5px; font-weight: 500; color: var(--accent); background: none; border: 0; padding: 2px 0; cursor: pointer;
+}
+.back:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mol svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.mol svg .fill { fill: currentColor; stroke: none; }
+.dropzone {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer;
+  font: inherit; color: var(--fg); background: transparent; border: 1.5px dashed var(--line); border-radius: 12px; padding: 12px 14px;
+  transition: border-color .15s, background-color .15s;
+}
+.dropzone > svg { width: 22px; height: 22px; color: var(--accent); padding: 7px; box-sizing: content-box; border-radius: 9px; background: var(--accent-soft); }
+.dropzone b { display: block; font-size: 14px; font-weight: 600; }
+.dropzone small { display: block; color: var(--muted); font-size: 12px; }
+.dropzone:hover, .dropzone.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 40%, transparent); }
+.alert {
+  display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px;
+  color: var(--danger); background: color-mix(in srgb, var(--danger) 9%, var(--panel)); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+}
+.alert p { margin: 0; font-size: 13px; color: var(--fg); }
+.mini { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button {
+  max-width: 100%; display: inline-flex; gap: 6px; align-items: baseline; font: inherit; font-size: 12.5px; color: var(--fg);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer;
+}
+.chips button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+.chips button em { font-style: normal; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.chips button:hover { border-color: var(--accent); }
+.chips button[aria-current="true"] { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); }
+.player { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.ibtn {
+  width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; cursor: pointer;
+  color: var(--fg); background: transparent; border: 1px solid var(--line); padding: 0;
+}
+.ibtn:hover { border-color: var(--accent); color: var(--accent); }
+.ibtn svg { width: 16px; height: 16px; }
+.ibtn.play { width: 42px; height: 42px; background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.ibtn.play:hover { color: var(--panel); filter: brightness(1.08); }
+.ibtn.play svg { width: 20px; height: 20px; }
+.ibtn.play .i-pause, .ibtn.play[aria-pressed="true"] .i-play { display: none; }
+.ibtn.play[aria-pressed="true"] .i-pause { display: block; }
+.anim { border-top: 1px solid var(--line); padding-top: 8px; }
+.anim summary {
+  display: flex; justify-content: space-between; gap: 10px; align-items: center; cursor: pointer; list-style: none;
+  font-size: 13px; font-weight: 500; color: var(--fg); padding: 2px 0;
+}
+.anim summary::-webkit-details-marker { display: none; }
+.anim summary::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; margin-right: 2px; }
+.anim[open] summary::before { transform: rotate(45deg); }
+.anim summary > span:first-child { flex: 1; }
+.sum-val { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+.anim summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.anim-body { display: grid; gap: 4px; padding-top: 10px; font-size: 13px; color: var(--muted); }
+.row-lbl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.presets { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 2px; gap: 2px; margin: 4px 0 6px; }
+.presets button { min-width: 0; font: inherit; font-size: 11.5px; line-height: 1.2; color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 6px 2px; cursor: pointer; text-align: center; }
+.presets button:hover { color: var(--fg); }
+.presets button[aria-pressed="true"] { background: var(--panel); color: var(--accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+kbd { font-family: var(--font-mono); font-size: 11px; padding: 0 4px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; color: var(--fg); background: var(--panel); }
+aside > .sec + .sec, aside > .sec + .note { border-top: 1px solid var(--line); padding-top: 18px; }
+.timing-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; margin-bottom: 6px; }
+.timing-row input[type="range"] { width: 100%; min-width: 0; accent-color: var(--accent); }
+.num-in { display: inline-flex; gap: 4px; align-items: center; }
+
+dl.facts { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; text-align: right; font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.groups { display: flex; flex-direction: column; gap: 4px; }
+.grp {
+  display: grid; grid-template-columns: 10px 1fr auto; gap: 10px; align-items: center; text-align: left;
+  font: inherit; color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 8px;
+  padding: 7px 9px; cursor: pointer;
+}
+.grp:hover { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
+.grp[aria-pressed="true"] { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.grp .dot { width: 10px; height: 10px; border-radius: 50%; }
+.grp .tag { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.detail { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.detail .empty { color: var(--muted); margin: 0; }
+.detail .atom-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.detail .chip {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display);
+  font-weight: 700; font-size: 16px; flex: none; box-shadow: inset 0 -3px 6px rgba(0,0,0,.18);
+}
+.detail .atom-head b { font-family: var(--font-display); font-size: 19px; font-weight: 700; display: block; line-height: 1.15; }
+.detail .atom-head span { color: var(--muted); font-size: 13px; }
+.detail p { margin: 0 0 10px; }
+.detail .sub-h { margin: 10px 0 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.detail .mirror-note { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; color: var(--fg);
+  background: color-mix(in srgb, var(--mirror) 10%, transparent); border: 1px solid color-mix(in srgb, var(--mirror) 35%, transparent); }
+.detail .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.detail .actions .btn { font-size: 12.5px; padding: 5px 10px; }
+.detail .atom-head .side-badge { display: inline-block; margin-left: 6px; font-family: var(--font-mono); font-size: 11px; padding: 0 6px; border-radius: 4px; vertical-align: 2px; }
+.detail .atom-head .side-badge.L { color: var(--accent); border: 1px solid currentColor; }
+.detail .atom-head .side-badge.D, .detail .atom-head .side-badge.M { color: var(--mirror); border: 1px solid currentColor; }
+.measure { margin-top: 10px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 10px; padding: 10px 12px; background: color-mix(in srgb, var(--accent-soft) 35%, var(--panel)); }
+.measure .m-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.measure .m-head b { font-size: 13.5px; }
+.measure .m-path { margin: 6px 0; font-family: var(--font-mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.measure ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.measure li { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
+.measure li span:last-child { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 500; }
+.measure .note { margin-top: 8px; }
+.detail .coords { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bonds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.bonds li { display: flex; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.bonds li button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.legend i { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--line); display: inline-block; }
+.legend em { font-style: normal; font-family: var(--font-mono); color: var(--muted); font-size: 12px; }
+.note { color: var(--muted); font-size: 12.5px; margin: 0; }
+.comment { margin: 10px 0 0; font-family: var(--font-mono); font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+
+/* energy panel */
+.en-ctrl { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: var(--muted); margin-bottom: 10px; align-items: center; }
+.en-ctrl label { display: inline-flex; gap: 6px; align-items: center; }
+select, input[type="number"] {
+  font: inherit; font-size: 13px; color: var(--fg); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; padding: 3px 6px; max-width: 100%;
+}
+input[type="number"] { width: 72px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.en-min { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.en-min span { min-width: 0; overflow-wrap: anywhere; }
+.conf { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 360px; overflow-y: auto; }
+.conf button {
+  width: 100%; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 3px 8px; align-items: center; text-align: left;
+  font: inherit; color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; cursor: pointer;
+}
+.conf button:hover { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
+.conf button[aria-current="true"] { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.conf .rk { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.conf .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; }
+.conf .bdg { display: inline-flex; gap: 4px; }
+.conf .row2 { grid-column: 2 / 4; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; }
+.conf .track { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.conf .fill { height: 100%; border-radius: 3px; background: var(--accent); min-width: 2px; }
+.conf .num { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+.conf .num b { color: var(--fg); font-weight: 500; }
+.badge { font-family: var(--font-mono); font-size: 11px; font-weight: 500; padding: 0 5px; border-radius: 4px; border: 1px solid currentColor; line-height: 16px; }
+.badge.L { color: var(--accent); }
+.badge.D { color: var(--mirror); }
+.badge.min { color: var(--fg); background: var(--accent-soft); border-color: transparent; }
+.echart { position: relative; margin: 2px 0 12px 34px; }
+.echart svg { display: block; width: 100%; height: 110px; cursor: crosshair; touch-action: none; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.e-line { fill: none; stroke: var(--accent); stroke-width: 1.4; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.e-area { fill: var(--accent-soft); stroke: none; opacity: .8; }
+.e-marks { stroke: var(--mirror); stroke-width: 2; vector-effect: non-scaling-stroke; fill: none; stroke-linecap: round; }
+.list-ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin: 4px 0 6px; font-size: 12.5px; color: var(--muted); }
+.list-ctrl label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.list-ctrl label:first-child { grid-column: 1 / -1; }
+.list-ctrl select { width: 100%; }
+.list-sum { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
+.badge.max { color: var(--danger); border-color: transparent; background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.e-cur { stroke: var(--fg); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 3 3; }
+.e-cur-dot, .e-min-dot { position: absolute; width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.e-cur-dot { background: var(--fg); border: 2px solid var(--panel); }
+.e-min-dot { background: var(--panel); border: 2px solid var(--accent); }
+.echart-y { position: absolute; left: -34px; top: 0; height: 110px; width: 30px; display: flex; flex-direction: column; justify-content: space-between; text-align: right; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.echart-x { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+.cmp { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.cmp label { font-size: 13px; color: var(--muted); }
+.pairs { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.pairs b { color: var(--fg); font-weight: 500; }
+
+@media (max-width: 820px) {
+  html, body { height: auto; }
+  .app { height: auto; grid-template-columns: minmax(0, 1fr); }
+  .stage { height: 68svh; min-height: 420px; }
+  aside { overflow: visible; }
+}
+@media (max-width: 480px) {
+  .formula { display: none; }
+  .seg button { padding: 6px 8px; }
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <section class="stage" id="stage" aria-label="Visor 3D de la molécula">
+    <canvas id="gl"></canvas>
+    <div class="labels" id="labels"></div>
+    <div class="labels" id="tags"></div>
+    <div class="stage-head">
+      <h1><span id="title">L-Lisina</span><small id="subtitle">Ácido (S)-2,6-diaminohexanoico · Lys · K</small></h1>
+      <div class="formula"><b id="formula">C₆H₁₄N₂O₂</b><span id="formName">forma neutra</span></div>
+    </div>
+    <div class="hint" id="hint">Cargando visor 3D…</div>
+    <div class="mhint" id="mHint" hidden>Midiendo: haz clic en otro átomo · <kbd>Esc</kbd> para terminar</div>
+    <div class="drop" id="drop" hidden>Suelta tus archivos (.xyz, .mol, .sdf, .mol2) para verlos en 3D</div>
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Estilo del modelo">
+        <button id="m-ball" data-mode="ball" aria-pressed="true">Esferas y varillas</button>
+        <button id="m-stick" data-mode="stick" aria-pressed="false">Varillas</button>
+        <button id="m-space" data-mode="space" aria-pressed="false">Volumen</button>
+      </div>
+      <div class="toggles">
+        <button class="btn" id="t-h" aria-pressed="true">Hidrógenos</button>
+        <button class="btn" id="t-lbl" aria-pressed="true">Etiquetas</button>
+        <button class="btn" id="t-mirror" aria-pressed="false" title="Muestra la estructura junto a su imagen especular (L y D)">Espejo</button>
+        <button class="btn" id="t-hb" aria-pressed="true" title="Líneas punteadas entre un H y un N, O o F cercanos">Puentes de H</button>
+        <button class="btn" id="t-spin" aria-pressed="true">Girar</button>
+        <button class="btn" id="t-reset" aria-pressed="false">Centrar</button>
+      </div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="sec mol">
+      <div class="sec-head">
+        <h2>Molécula</h2>
+        <span class="status" id="loadStatus" role="status" hidden><span class="spin" aria-hidden="true"></span><span id="loadText">Leyendo…</span></span>
+      </div>
+
+      <div class="src-card">
+        <div class="src-row">
+          <span class="fmt" id="fmtBadge">INCLUIDA</span>
+          <b class="src-title" id="srcName">L-Lisina</b>
+          <button class="open-sm" id="openSmall" type="button" hidden title="Abrir otro archivo (.xyz, .mol, .sdf, .mol2)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><span>Abrir otro</span></button>
+        </div>
+        <div class="stats" id="srcStats"></div>
+        <div class="seg form-seg" id="secForm" role="group" aria-label="Estado de protonación">
+          <button id="f-neutral" data-form="neutral" aria-pressed="true">Neutra</button>
+          <button id="f-physio" data-form="physio" aria-pressed="false">pH 7.4 (ion)</button>
+        </div>
+      </div>
+
+      <div class="alert" id="xyzErrBox" role="alert" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>
+        <p id="xyzErr"></p>
+        <button class="x" id="errClose" type="button" aria-label="Cerrar aviso">×</button>
+      </div>
+
+      <button class="dropzone" id="openXyz" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+        <span><b>Abrir tus archivos</b><small>Haz clic o suéltalos aquí · .xyz .mol .sdf .mol2 · varios a la vez</small></span>
+      </button>
+      <input type="file" id="xyzInput" accept=".xyz,.mol,.sdf,.sd,.mol2,.mdl,.txt,chemical/x-xyz,chemical/x-mdl-molfile,chemical/x-mdl-sdfile,chemical/x-mol2,text/plain" multiple hidden>
+
+      <div class="recent" id="recentWrap" hidden>
+        <span class="mini">Cambiar a otro archivo abierto</span>
+        <div class="chips" id="recent"></div>
+      </div>
+
+      <div class="player" id="frames" hidden>
+        <div class="now">
+          <div class="now-txt"><b id="frameName">—</b><span id="frameSub"></span></div>
+          <output id="frameLbl">1 / 1</output>
+        </div>
+          <div class="echart" id="eChart" hidden tabindex="0" role="slider" aria-label="Estructura (gráfica de energía)" aria-valuemin="1" aria-valuemax="1" aria-valuenow="1">
+            <div class="echart-y"><span id="eChartTop">0</span><span>0</span></div>
+            <svg id="eSvg" viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true">
+              <path class="e-area" id="eArea" d=""></path>
+              <path class="e-line" id="eLine" d=""></path>
+              <path class="e-marks" id="eMarks" d=""></path>
+              <line class="e-cur" id="eCur" x1="0" x2="0" y1="0" y2="200"></line>
+            </svg>
+            <span class="e-min-dot" id="eMinDot"></span>
+            <span class="e-cur-dot" id="eCurDot"></span>
+            <div class="echart-x"><span>1</span><span id="eChartX">Estructura</span><span id="eChartN">N</span></div>
+          </div>
+        <input type="range" id="frameSlider" min="0" max="0" value="0" step="1" aria-label="Estructura">
+        <div class="transport">
+          <button class="ibtn" id="prevBtn" type="button" aria-label="Estructura anterior" title="Anterior (←)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14"/><path d="M18 6 9 12l9 6z" class="fill"/></svg></button>
+          <button class="ibtn play" id="play" type="button" aria-pressed="false" aria-label="Reproducir" title="Reproducir (espacio)"><svg viewBox="0 0 24 24" aria-hidden="true" class="i-play"><path d="M8 5.5v13l10.5-6.5z" class="fill"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="i-pause"><path d="M8 5h3v14H8zM13 5h3v14h-3z" class="fill"/></svg></button>
+          <button class="ibtn" id="nextBtn" type="button" aria-label="Estructura siguiente" title="Siguiente (→)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14"/><path d="M6 6l9 6-9 6z" class="fill"/></svg></button>
+        </div>
+        <details class="anim" id="timing">
+          <summary><span>Animación</span><span class="sum-val" id="timingSum">1 s · pausa 0.45 s</span></summary>
+          <div class="anim-body">
+            <label class="row-lbl" id="orderWrap">Recorrido
+              <select id="playOrder">
+                <option value="energy">de menor a mayor energía</option>
+                <option value="file">en el orden del archivo</option>
+              </select>
+            </label>
+            <div class="presets" role="group" aria-label="Velocidad">
+              <button type="button" data-dur="6" data-hold="1.5">Muy lento</button>
+              <button type="button" data-dur="2" data-hold="0.8">Lento</button>
+              <button type="button" data-dur="1" data-hold="0.45">Normal</button>
+              <button type="button" data-dur="0.3" data-hold="0.1">Rápido</button>
+              <button type="button" data-dur="0.08" data-hold="0">Muy rápido</button>
+            </div>
+            <label class="row-lbl" for="durIn">Tiempo de cada transición</label>
+            <div class="timing-row">
+              <input type="range" id="durRange" min="0" max="1000" step="1" aria-label="Tiempo de cada transición">
+              <span class="num-in"><input type="number" id="durIn" min="0.05" max="30" step="0.05" value="1"> s</span>
+            </div>
+            <label class="row-lbl" for="holdIn">Pausa en cada estructura</label>
+            <div class="timing-row">
+              <input type="range" id="holdRange" min="0" max="1000" step="1" aria-label="Pausa en cada estructura">
+              <span class="num-in"><input type="number" id="holdIn" min="0" max="30" step="0.05" value="0.45"> s</span>
+            </div>
+            <p class="note">Atajos: <kbd>espacio</kbd> reproduce o pausa, <kbd>←</kbd> <kbd>→</kbd> cambian de estructura.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="sec" id="secEnergy" hidden>
+      <h2>Energías</h2>
+      <div class="en-ctrl">
+        <label>Energía en el archivo
+          <select id="enUnit">
+            <option value="kcal">kcal/mol</option>
+            <option value="kj">kJ/mol</option>
+            <option value="ha">Hartree</option>
+            <option value="ev">eV</option>
+          </select>
+        </label>
+        <label id="enTWrap">T <input type="number" id="enT" value="298.15" min="1" max="5000" step="1"> K</label>
+      </div>
+      <div class="en-min" id="enMin"></div>
+      <div class="list-ctrl">
+        <label>Mostrar
+          <select id="listMode">
+            <option value="low">las de menor energía</option>
+            <option value="high">las de mayor energía</option>
+            <option value="lmin">mínimos locales</option>
+            <option value="lmax">máximos locales</option>
+            <option value="all">todas</option>
+          </select>
+        </label>
+        <label>Cantidad
+          <select id="listCount">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="300">300</option>
+            <option value="0">todas</option>
+          </select>
+        </label>
+        <label>Orden
+          <select id="listSort">
+            <option value="asc">menor → mayor</option>
+            <option value="desc">mayor → menor</option>
+            <option value="step">por número</option>
+          </select>
+        </label>
+      </div>
+      <p class="list-sum" id="listSum"></p>
+      <ol class="conf" id="confList"></ol>
+      <ul class="pairs" id="pairs"></ul>
+      <div class="cmp">
+        <label for="cmpSel">Superponer otra estructura para compararla</label>
+        <select id="cmpSel"></select>
+        <p class="note" id="cmpOut"></p>
+      </div>
+      <p class="note" id="enNote" style="margin-top:10px"></p>
+    </div>
+
+    <div class="sec">
+      <h2>Átomo seleccionado</h2>
+      <div class="detail" id="detail"></div>
+      <div class="measure" id="measure" hidden></div>
+    </div>
+
+    <div class="sec" id="secGroups">
+      <h2>Partes de la molécula</h2>
+      <div class="groups" id="groups"></div>
+    </div>
+
+    <div class="sec">
+      <h2>Datos</h2>
+      <dl class="facts" id="facts"></dl>
+      <p class="comment" id="comment" hidden></p>
+    </div>
+
+    <div class="sec">
+      <h2>Elementos</h2>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <p class="note" id="note"></p>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const GEO = {"neutral":{"atoms":[["N",-4.027,-0.172,0.343,0],["C",-2.647,-0.55,0.056,0],["C",-1.82,0.668,-0.356,0],["C",-0.385,0.319,-0.767,0],["C",0.464,-0.223,0.391,0],["C",1.93,-0.443,-0.009,0],["N",2.57,-1.317,1.001,0],["C",2.718,0.875,-0.104,0],["O",2.277,2.01,-0.175,0],["O",4.057,0.667,-0.158,0],["H",-4.434,0.283,-0.473,0],["H",-4.04,0.527,1.086,0],["H",-2.226,-1.021,0.95,0],["H",-2.643,-1.299,-0.743,0],["H",-2.305,1.161,-1.209,0],["H",-1.799,1.401,0.46,0],["H",0.075,1.225,-1.176,0],["H",-0.405,-0.416,-1.581,0],["H",0.033,-1.177,0.718,0],["H",0.405,0.465,1.245,0],["H",1.989,-0.932,-0.989,0],["H",2.216,-2.266,0.898,0],["H",3.57,-1.356,0.786,0],["H",4.426,1.574,-0.193,0]],"bonds":[[0,1,1.0],[1,2,1.0],[2,3,1.0],[3,4,1.0],[4,5,1.0],[5,6,1.0],[5,7,1.0],[7,8,2.0],[7,9,1.0],[0,10,1.0],[0,11,1.0],[1,12,1.0],[1,13,1.0],[2,14,1.0],[2,15,1.0],[3,16,1.0],[3,17,1.0],[4,18,1.0],[4,19,1.0],[5,20,1.0],[6,21,1.0],[6,22,1.0],[9,23,1.0]]},"physio":{"atoms":[["N",-2.983,0.379,-1.351,1],["C",-1.646,0.566,-0.728,0],["C",-1.528,-0.324,0.511,0],["C",-0.451,0.135,1.507,0],["C",0.905,-0.593,1.477,0],["C",1.72,-0.557,0.187,0],["N",3.091,-1.165,0.472,1],["C",1.937,0.844,-0.464,0],["O",3.18,1.058,-0.608,0],["O",0.913,1.489,-0.78,-1],["H",-3.043,0.964,-2.195,0],["H",-3.737,0.677,-0.721,0],["H",-3.149,-0.594,-1.633,0],["H",-0.933,0.277,-1.5,0],["H",-1.581,1.631,-0.49,0],["H",-2.488,-0.302,1.043,0],["H",-1.365,-1.367,0.217,0],["H",-0.302,1.219,1.449,0],["H",-0.857,-0.037,2.514,0],["H",1.508,-0.161,2.288,0],["H",0.738,-1.642,1.754,0],["H",1.269,-1.207,-0.571,0],["H",3.715,-0.452,0.002,0],["H",3.38,-1.135,1.452,0],["H",3.279,-2.062,0.023,0]],"bonds":[[0,1,1.0],[1,2,1.0],[2,3,1.0],[3,4,1.0],[4,5,1.0],[5,6,1.0],[5,7,1.0],[7,8,2.0],[7,9,1.0],[0,10,1.0],[0,11,1.0],[0,12,1.0],[1,13,1.0],[1,14,1.0],[2,15,1.0],[2,16,1.0],[3,17,1.0],[3,18,1.0],[4,19,1.0],[4,20,1.0],[5,21,1.0],[6,22,1.0],[6,23,1.0],[6,24,1.0]]}};
+
+  // ---------- lysine annotations (heavy-atom index order is the same in both forms) ----------
+  const HEAVY = {
+    0: { name: "Nζ", desc: "Nitrógeno del grupo amino ε, al final de la cadena lateral. Es lo que hace a la lisina un aminoácido básico." },
+    1: { name: "Cε", desc: "Carbono ε de la cadena lateral, unido al grupo amino terminal." },
+    2: { name: "Cδ", desc: "Carbono δ, metileno (–CH₂–) de la cadena lateral." },
+    3: { name: "Cγ", desc: "Carbono γ, metileno (–CH₂–) de la cadena lateral." },
+    4: { name: "Cβ", desc: "Carbono β, primer metileno de la cadena lateral." },
+    5: { name: "Cα", desc: "Carbono α: centro quiral (configuración S en la L-lisina). Une el grupo amino, el carboxilo, un H y la cadena lateral." },
+    6: { name: "Nα", desc: "Nitrógeno del grupo amino α, el que forma el enlace peptídico en las proteínas." },
+    7: { name: "C′", desc: "Carbono del grupo carboxilo, con hibridación sp² (geometría plana)." },
+    8: { name: "O1", desc: "Oxígeno carbonílico, unido al C′ por un enlace doble." },
+    9: { name: "O2", desc: "Oxígeno del hidroxilo del grupo carboxilo (–OH)." }
+  };
+  const HEAVY_PHYSIO = {
+    0: "Nitrógeno del grupo amino ε protonado (–NH₃⁺). A pH 7.4 lleva carga positiva (pKa ≈ 10.5).",
+    6: "Nitrógeno del grupo amino α protonado (–NH₃⁺), con carga positiva (pKa ≈ 9.0).",
+    8: "Oxígeno del carboxilato (–COO⁻). La carga negativa se reparte entre los dos oxígenos por resonancia.",
+    9: "Oxígeno del carboxilato (–COO⁻). Comparte la carga negativa con O1 por resonancia (pKa ≈ 2.2)."
+  };
+  const GROUPS = [
+    { id: "amino-a", label: "Grupo amino α", tag: "–NH₂", tagP: "–NH₃⁺", heavy: [6], color: "var(--el-N)" },
+    { id: "carbox", label: "Grupo carboxilo", tag: "–COOH", tagP: "–COO⁻", heavy: [7, 8, 9], color: "var(--el-O)" },
+    { id: "calpha", label: "Carbono α (quiral)", tag: "C–H", tagP: "C–H", heavy: [5], color: "var(--accent)" },
+    { id: "chain", label: "Cadena lateral", tag: "(CH₂)₄", tagP: "(CH₂)₄", heavy: [4, 3, 2, 1], color: "var(--el-C)" },
+    { id: "amino-e", label: "Grupo amino ε", tag: "–NH₂", tagP: "–NH₃⁺", heavy: [0], color: "var(--el-N)" }
+  ];
+
+  // ---------- periodic table subset: symbol Z mass covalentR vdwR jmolColor nombre ----------
+  const PT_RAW = "H 1 1.008 .31 1.10 FFFFFF Hidrógeno|He 2 4.003 .28 1.40 D9FFFF Helio|Li 3 6.94 1.28 1.82 CC80FF Litio|Be 4 9.012 .96 1.53 C2FF00 Berilio|B 5 10.81 .84 1.92 FFB5B5 Boro|C 6 12.011 .76 1.70 909090 Carbono|N 7 14.007 .71 1.55 3050F8 Nitrógeno|O 8 15.999 .66 1.52 FF0D0D Oxígeno|F 9 18.998 .57 1.47 90E050 Flúor|Ne 10 20.180 .58 1.54 B3E3F5 Neón|Na 11 22.990 1.66 2.27 AB5CF2 Sodio|Mg 12 24.305 1.41 1.73 8AFF00 Magnesio|Al 13 26.982 1.21 1.84 BFA6A6 Aluminio|Si 14 28.085 1.11 2.10 F0C8A0 Silicio|P 15 30.974 1.07 1.80 FF8000 Fósforo|S 16 32.06 1.05 1.80 E6C619 Azufre|Cl 17 35.45 1.02 1.75 1FF01F Cloro|Ar 18 39.948 1.06 1.88 80D1E3 Argón|K 19 39.098 2.03 2.75 8F40D4 Potasio|Ca 20 40.078 1.76 2.31 3DFF00 Calcio|Sc 21 44.956 1.70 2.11 E6E6E6 Escandio|Ti 22 47.867 1.60 2.00 BFC2C7 Titanio|V 23 50.942 1.53 2.00 A6A6AB Vanadio|Cr 24 51.996 1.39 2.00 8A99C7 Cromo|Mn 25 54.938 1.39 2.00 9C7AC7 Manganeso|Fe 26 55.845 1.32 2.00 E06633 Hierro|Co 27 58.933 1.26 2.00 F090A0 Cobalto|Ni 28 58.693 1.24 1.63 50D050 Níquel|Cu 29 63.546 1.32 1.40 C88033 Cobre|Zn 30 65.38 1.22 1.39 7D80B0 Zinc|Ga 31 69.723 1.22 1.87 C28F8F Galio|Ge 32 72.630 1.20 2.11 668F8F Germanio|As 33 74.922 1.19 1.85 BD80E3 Arsénico|Se 34 78.971 1.20 1.90 FFA100 Selenio|Br 35 79.904 1.20 1.85 A62929 Bromo|Kr 36 83.798 1.16 2.02 5CB8D1 Kriptón|Rb 37 85.468 2.20 3.03 702EB0 Rubidio|Sr 38 87.62 1.95 2.49 00FF00 Estroncio|Y 39 88.906 1.90 2.00 94FFFF Itrio|Zr 40 91.224 1.75 2.00 94E0E0 Circonio|Nb 41 92.906 1.64 2.00 73C2C9 Niobio|Mo 42 95.95 1.54 2.00 54B5B5 Molibdeno|Tc 43 98 1.47 2.00 3B9E9E Tecnecio|Ru 44 101.07 1.46 2.00 248F8F Rutenio|Rh 45 102.91 1.42 2.00 0A7D8C Rodio|Pd 46 106.42 1.39 1.63 006985 Paladio|Ag 47 107.87 1.45 1.72 C0C0C0 Plata|Cd 48 112.41 1.44 1.58 FFD98F Cadmio|In 49 114.82 1.42 1.93 A67573 Indio|Sn 50 118.71 1.39 2.17 668080 Estaño|Sb 51 121.76 1.39 2.06 9E63B5 Antimonio|Te 52 127.60 1.38 2.06 D47A00 Telurio|I 53 126.90 1.39 1.98 940094 Yodo|Xe 54 131.29 1.40 2.16 429EB0 Xenón|Cs 55 132.91 2.44 3.43 57178F Cesio|Ba 56 137.33 2.15 2.68 00C900 Bario|La 57 138.91 2.07 2.00 70D4FF Lantano|Gd 64 157.25 1.96 2.00 45FFC7 Gadolinio|W 74 183.84 1.62 2.00 2194D6 Wolframio|Os 76 190.23 1.44 2.00 266696 Osmio|Ir 77 192.22 1.41 2.00 175487 Iridio|Pt 78 195.08 1.36 1.75 D0D0E0 Platino|Au 79 196.97 1.36 1.66 FFD123 Oro|Hg 80 200.59 1.32 1.55 B8B8D0 Mercurio|Tl 81 204.38 1.45 1.96 A6544D Talio|Pb 82 207.2 1.46 2.02 575961 Plomo|Bi 83 208.98 1.48 2.07 9E4FB5 Bismuto|U 92 238.03 1.96 1.86 008FFF Uranio";
+  const PT = {}, BYZ = {};
+  PT_RAW.split("|").forEach(row => {
+    const t = row.split(" ");
+    PT[t[0]] = { z: +t[1], mass: +t[2], cov: +t[3], vdw: +t[4], hex: "#" + t[5], name: t[6] };
+    BYZ[+t[1]] = t[0];
+  });
+  const UNKNOWN = { z: 0, mass: 0, cov: 1.5, vdw: 2.0, hex: "#ff1493", name: "Desconocido" };
+  const props = el => PT[el] || UNKNOWN;
+  const THEMED = { C: 1, H: 1, N: 1, O: 1 };
+  const colorCss = el => THEMED[el] ? "var(--el-" + el + ")" : props(el).hex;
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const state = {
+    mode: "ball", showH: true, labels: true, hb: true, mirror: false, spin: !reducedMotion,
+    source: "lysine", form: "neutral",        // source: "lysine" | "file"
+    file: null,                               // { name, frames: [...], frame, hasE, unit, T, pairs }
+    sel: null, group: null, cmp: null
+  };
+  const $ = (id) => document.getElementById(id);
+  const hint = $("hint");
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  if (typeof THREE === "undefined") { hint.textContent = "No se pudo cargar la librería 3D. Revisa tu conexión y recarga."; hint.style.opacity = 1; return; }
+
+  // ---------- scene ----------
+  const canvas = $("gl"), stage = $("stage"), labelsEl = $("labels");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 500);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.rotateSpeed = 0.8; controls.minDistance = 2; controls.maxDistance = 60;
+  controls.autoRotateSpeed = 1.2;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x667788, 0.8));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.15));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(5, 8, 10);
+  camera.add(key);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.3); rim.position.set(-6, -3, -4);
+  camera.add(rim);
+  scene.add(camera);
+
+  const root = new THREE.Group(); scene.add(root);
+  const GEOMS = {
+    hi: { sphere: new THREE.SphereGeometry(1, 40, 28), cyl: new THREE.CylinderGeometry(1, 1, 1, 20, 1, true) },
+    lo: { sphere: new THREE.SphereGeometry(1, 16, 12), cyl: new THREE.CylinderGeometry(1, 1, 1, 8, 1, true) }
+  };
+  let geoms = GEOMS.hi;
+
+  let atoms = [], bondList = [], bondMeshes = [], atomMeshes = [], labelNodes = [], parentOf = [], hbonds = [];
+  let molRadius = 5, fileComment = "";
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function elColor(el) { return new THREE.Color(THEMED[el] ? css("--el-" + el) : props(el).hex); }
+
+  function atomRadius(el) {
+    const p = props(el);
+    if (state.mode === "space") return p.vdw;
+    if (state.mode === "stick") return .15;
+    return el === "H" ? .24 : Math.min(.6, p.vdw * .22);
+  }
+
+  // ---------- XYZ parsing ----------
+  function normEl(tok) {
+    if (/^\d+$/.test(tok)) return BYZ[+tok] || "X";
+    const m = tok.match(/^[A-Za-z]{1,2}/);
+    if (!m) return null;
+    const two = m[0].length === 2 ? m[0][0].toUpperCase() + m[0][1].toLowerCase() : null;
+    const one = m[0][0].toUpperCase();
+    if (PT[tok]) return tok;
+    if (two && PT[two] && (m[0][1] === m[0][1].toLowerCase())) return two;
+    if (PT[one]) return one;
+    if (two && PT[two]) return two;
+    return one;
+  }
+  function parseAtomLines(lines, firstLineNo) {
+    return lines.map((l, k) => {
+      const t = l.trim().split(/\s+/);
+      const el = t.length >= 4 ? normEl(t[0]) : null;
+      const x = parseFloat(t[1]), y = parseFloat(t[2]), z = parseFloat(t[3]);
+      if (!el || !isFinite(x) || !isFinite(y) || !isFinite(z))
+        throw new Error("La línea " + (firstLineNo + k) + " no tiene el formato «Elemento x y z»: «" + l.trim().slice(0, 40) + "».");
+      return { el, x, y, z };
+    });
+  }
+  function parseXYZ(text) {
+    const lines = text.replace(/\r/g, "").split("\n");
+    const frames = [];
+    let i = 0;
+    while (i < lines.length) {
+      if (!lines[i].trim()) { i++; continue; }
+      if (!/^\s*\d+\s*$/.test(lines[i])) {
+        if (frames.length) break;
+        // No header: treat every non-empty line as an atom
+        const body = lines.filter(l => l.trim());
+        frames.push({ fmt: "xyz", comment: "", atoms: parseAtomLines(body, 1) });
+        break;
+      }
+      const n = parseInt(lines[i], 10);
+      if (n === 0) throw new Error("La línea " + (i + 1) + " indica 0 átomos.");
+      const body = lines.slice(i + 2, i + 2 + n);
+      if (body.length < n || body.some(l => !l.trim())) {
+        if (frames.length) break; // incomplete trailing frame: keep what we have
+        throw new Error("El archivo indica " + n + " átomos en la línea " + (i + 1) + ", pero no hay " + n + " líneas de coordenadas después.");
+      }
+      frames.push({ fmt: "xyz", comment: (lines[i + 1] || "").trim(), atoms: parseAtomLines(body, i + 3) });
+      i += 2 + n;
+    }
+    if (!frames.length || !frames[0].atoms.length) throw new Error("El archivo está vacío o no contiene coordenadas.");
+    return frames;
+  }
+
+  // ---------- MDL Molfile / SDF (V2000 and V3000) ----------
+  const MDL_CHG = { 1: 3, 2: 2, 3: 1, 4: 0, 5: -1, 6: -2, 7: -3 };
+  const bondOrder = ty => ty === 2 ? 2 : ty === 3 ? 3 : ty === 4 ? 1.5 : 1;
+  function parseV2000(L, base) {
+    const counts = L[3] || "";
+    let na = parseInt(counts.substr(0, 3), 10), nb = parseInt(counts.substr(3, 3), 10);
+    if (!isFinite(na) || !isFinite(nb)) { const c = counts.trim().split(/\s+/); na = parseInt(c[0], 10); nb = parseInt(c[1], 10); }
+    if (!(na > 0)) throw new Error("La línea " + (base + 4) + " debería decir cuántos átomos y enlaces tiene la molécula.");
+    const atoms = [], bonds = [];
+    for (let i = 0; i < na; i++) {
+      const l = L[4 + i];
+      if (l === undefined) throw new Error("Faltan átomos: se esperaban " + na + " a partir de la línea " + (base + 5) + ".");
+      let x = parseFloat(l.substr(0, 10)), y = parseFloat(l.substr(10, 10)), z = parseFloat(l.substr(20, 10));
+      let sym = l.substr(31, 3).trim(), chg = parseInt(l.substr(36, 3), 10) || 0;
+      if (!isFinite(x) || !isFinite(y) || !isFinite(z) || !/^[A-Za-z]/.test(sym)) {
+        const tk = l.trim().split(/\s+/);
+        x = parseFloat(tk[0]); y = parseFloat(tk[1]); z = parseFloat(tk[2]); sym = tk[3] || ""; chg = parseInt(tk[5], 10) || 0;
+      }
+      const el = normEl(sym);
+      if (!el || !isFinite(x) || !isFinite(y) || !isFinite(z)) throw new Error("No entiendo el átomo de la línea " + (base + 5 + i) + ": «" + l.trim().slice(0, 50) + "».");
+      atoms.push({ el, x, y, z, q: MDL_CHG[chg] || 0 });
+    }
+    for (let j = 0; j < nb; j++) {
+      const l = L[4 + na + j];
+      if (l === undefined) throw new Error("Faltan enlaces: se esperaban " + nb + ".");
+      let a = parseInt(l.substr(0, 3), 10), b = parseInt(l.substr(3, 3), 10), ty = parseInt(l.substr(6, 3), 10);
+      if (!(a >= 1 && a <= na && b >= 1 && b <= na)) { const tk = l.trim().split(/\s+/); a = +tk[0]; b = +tk[1]; ty = +tk[2]; }
+      if (!(a >= 1 && a <= na && b >= 1 && b <= na)) throw new Error("El enlace de la línea " + (base + 5 + na + j) + " apunta a un átomo que no existe.");
+      bonds.push({ a: a - 1, b: b - 1, o: bondOrder(ty) });
+    }
+    let chgReset = false;
+    for (let k = 4 + na + nb; k < L.length; k++) {
+      const l = L[k];
+      if (/^M\s+END/.test(l)) break;
+      if (/^M\s+CHG/.test(l)) {
+        if (!chgReset) { atoms.forEach(a => { a.q = 0; }); chgReset = true; }
+        const tk = l.substr(6).trim().split(/\s+/).map(Number);
+        for (let m = 1; m + 1 < tk.length; m += 2) if (atoms[tk[m] - 1]) atoms[tk[m] - 1].q = tk[m + 1];
+      }
+    }
+    return { atoms, bonds };
+  }
+  function parseV3000(L, base) {
+    const v = [];
+    for (let k = 0; k < L.length; k++) {
+      if (!/^M\s+V30\s/.test(L[k])) continue;
+      let s = L[k].replace(/^M\s+V30\s+/, "");
+      while (/-\s*$/.test(s) && k + 1 < L.length) { k++; s = s.replace(/-\s*$/, "") + L[k].replace(/^M\s+V30\s+/, ""); }
+      v.push(s.trim());
+    }
+    const atoms = [], bonds = [], idMap = new Map();
+    let sec = "";
+    v.forEach(s => {
+      if (/^BEGIN\s+(ATOM|BOND)/i.test(s)) { sec = s.split(/\s+/)[1].toUpperCase(); return; }
+      if (/^END\s/i.test(s)) { sec = ""; return; }
+      const tk = s.split(/\s+/);
+      if (sec === "ATOM") {
+        const el = normEl(tk[1]), x = +tk[2], y = +tk[3], z = +tk[4];
+        if (!el || !isFinite(x)) throw new Error("No entiendo el átomo V3000 «" + s.slice(0, 50) + "».");
+        const cm = s.match(/CHG=(-?\d+)/);
+        idMap.set(tk[0], atoms.length);
+        atoms.push({ el, x, y, z, q: cm ? +cm[1] : 0 });
+      } else if (sec === "BOND") {
+        const a = idMap.get(tk[2]), b = idMap.get(tk[3]);
+        if (a === undefined || b === undefined) throw new Error("Un enlace V3000 apunta a un átomo que no existe.");
+        bonds.push({ a, b, o: bondOrder(+tk[1]) });
+      }
+    });
+    if (!atoms.length) throw new Error("El bloque V3000 no contiene átomos.");
+    return { atoms, bonds };
+  }
+  function parseMolFile(text) {
+    const lines = text.replace(/\r/g, "").split("\n");
+    const frames = [];
+    let rec = [], start = 0;
+    const flush = endLine => {
+      if (rec.some(l => l.trim())) {
+        const mEnd = rec.findIndex(l => /^M\s+END/.test(l));
+        const molL = mEnd >= 0 ? rec.slice(0, mEnd + 1) : rec;
+        const isV3 = /V3000/i.test(molL[3] || "");
+        const mol = isV3 ? parseV3000(molL, start) : parseV2000(molL, start);
+        const fields = {};
+        if (mEnd >= 0) {
+          for (let k = mEnd + 1; k < rec.length; k++) {
+            const m = rec[k].match(/^>.*<([^>]+)>/);
+            if (!m) continue;
+            const val = [];
+            for (k++; k < rec.length && rec[k].trim() !== ""; k++) val.push(rec[k].trim());
+            fields[m[1].trim()] = val.join(" ");
+          }
+        }
+        frames.push({ fmt: "mol", name: (molL[0] || "").trim(), comment: (molL[2] || "").trim(), atoms: mol.atoms, fileBonds: mol.bonds, fields });
+      }
+      rec = []; start = endLine + 1;
+    };
+    lines.forEach((l, i) => { if (l.trim() === "$$$$") flush(i); else rec.push(l); });
+    flush(lines.length);
+    if (!frames.length) throw new Error("El archivo está vacío.");
+    return frames;
+  }
+
+  // ---------- Tripos MOL2 ----------
+  const MOL2_BOND = { "1": 1, "2": 2, "3": 3, ar: 1.5, am: 1 };
+  function parseMol2(text) {
+    const lines = text.replace(/\r/g, "").split("\n");
+    const frames = [];
+    let cur = null, sec = "", idMap = null;
+    lines.forEach((raw, ln) => {
+      const l = raw.trim();
+      if (!l || l.startsWith("#")) return;
+      if (/^@<TRIPOS>/i.test(l)) {
+        sec = l.replace(/^@<TRIPOS>/i, "").toUpperCase();
+        if (sec === "MOLECULE") { cur = { fmt: "mol", name: "", comment: "", atoms: [], fileBonds: [], fields: {}, _line: 0 }; frames.push(cur); idMap = new Map(); }
+        return;
+      }
+      if (!cur) return;
+      const tk = l.split(/\s+/);
+      if (sec === "MOLECULE") { if (!cur.name && cur._line === 0) cur.name = l; cur._line++; }
+      else if (sec === "ATOM") {
+        const x = +tk[2], y = +tk[3], z = +tk[4];
+        const type = tk[5] || tk[1];
+        let el = normEl(type.split(".")[0]);
+        if (!el || el === "X") el = normEl(tk[1]);
+        if (!el || !isFinite(x) || !isFinite(y) || !isFinite(z)) throw new Error("No entiendo el átomo de la línea " + (ln + 1) + ": «" + l.slice(0, 50) + "».");
+        idMap.set(tk[0], cur.atoms.length);
+        const atom = { el, x, y, z, q: 0 };
+        if (tk[8] !== undefined && isFinite(+tk[8])) atom.pq = +tk[8];
+        cur.atoms.push(atom);
+      } else if (sec === "BOND") {
+        const a = idMap.get(tk[1]), b = idMap.get(tk[2]), o = MOL2_BOND[(tk[3] || "1").toLowerCase()];
+        if (a === undefined || b === undefined) throw new Error("El enlace de la línea " + (ln + 1) + " apunta a un átomo que no existe.");
+        if (o) cur.fileBonds.push({ a, b, o });
+      }
+    });
+    frames.forEach(f => delete f._line);
+    if (!frames.length || !frames[0].atoms.length) throw new Error("No encontré ninguna sección @<TRIPOS>ATOM con átomos.");
+    return frames;
+  }
+
+  function parseAny(name, text) {
+    const m = name.match(/\.([^.]+)$/), ext = m ? m[1].toLowerCase() : "";
+    let frames;
+    const head = text.replace(/\r/g, "").split("\n");
+    const firstLine = (head.find(l => l.trim()) || "").trim();
+    const looksMol2 = /^@<TRIPOS>/im.test(text);
+    const looksMdl = /^M\s+END\s*$/m.test(text) || /V[23]000/i.test(head[3] || "");
+    const looksXyz = /^\d+$/.test(firstLine) && !looksMdl;
+    if (looksMol2) frames = parseMol2(text);
+    else if (looksMdl) frames = parseMolFile(text);
+    else if (looksXyz) frames = parseXYZ(text);           // e.g. deMon2k / ORCA trajectories saved as .mol
+    else if (ext === "mol2") frames = parseMol2(text);
+    else if (["mol", "sdf", "sd", "mdl"].includes(ext)) frames = parseMolFile(text);
+    else frames = parseXYZ(text);
+    const big = frames.find(f => f.atoms.length > 20000);
+    if (big) throw new Error("Una estructura tiene " + big.atoms.length + " átomos; este visor admite hasta 20 000.");
+    return frames;
+  }
+  // Energy stored as an SD data field (e.g. "MMFF94_energy", "dE_kcal", "SCF Energy")
+  function fieldEnergy(fields) {
+    for (const k of Object.keys(fields || {})) {
+      if (!/energ|^d?e$|delta.?e|^de[_ ]|mmff|uff|scf|kcal|hartree|^e[_ ]/i.test(k)) continue;
+      const v = parseFloat(fields[k]);
+      if (isFinite(v)) return { value: v, key: k, unit: /hartree|\bau\b|\(eh\)|_eh\b/i.test(k) ? "ha" : /kj/i.test(k) ? "kj" : /\bev\b|_ev\b/i.test(k) ? "ev" : /kcal/i.test(k) ? "kcal" : null };
+    }
+    return null;
+  }
+
+  // Align a molecule so its longest dimension runs along x (principal axes). Keeps handedness.
+  function principalFrame(pts) {
+    const c = new THREE.Vector3();
+    pts.forEach(p => c.add(p)); c.divideScalar(pts.length);
+    const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    pts.forEach(p => {
+      const d = [p.x - c.x, p.y - c.y, p.z - c.z];
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) C[a][b] += d[a] * d[b];
+    });
+    const mul = v => new THREE.Vector3(
+      C[0][0] * v.x + C[0][1] * v.y + C[0][2] * v.z,
+      C[1][0] * v.x + C[1][1] * v.y + C[1][2] * v.z,
+      C[2][0] * v.x + C[2][1] * v.y + C[2][2] * v.z);
+    const power = (v, ortho) => {
+      for (let k = 0; k < 60; k++) {
+        v = mul(v);
+        if (ortho) v.addScaledVector(ortho, -v.dot(ortho));
+        const L = v.length(); if (L < 1e-12) break; v.divideScalar(L);
+      }
+      return v;
+    };
+    const e1 = power(new THREE.Vector3(1, .3, .2).normalize());
+    let e2 = power(new THREE.Vector3(.2, 1, .3).normalize(), e1);
+    if (pts.length < 2 || !isFinite(e1.x)) return { c, basis: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)] };
+    if (Math.abs(e2.dot(e1)) > .9 || e2.lengthSq() < .5) e2 = new THREE.Vector3(0, 1, 0).cross(e1).normalize();
+    const e3 = new THREE.Vector3().crossVectors(e1, e2).normalize();
+    return { c, basis: [e1, e2, e3] };
+  }
+
+  // Bonds from distances: d < covR(a) + covR(b) + 0.4 Å, via a spatial grid.
+  function inferBonds(list) {
+    const maxCov = Math.max(...list.map(a => props(a.el).cov));
+    const cell = 2 * maxCov + .4;
+    const grid = new Map();
+    const keyOf = (x, y, z) => x + "," + y + "," + z;
+    list.forEach(a => {
+      const k = keyOf(Math.floor(a.p.x / cell), Math.floor(a.p.y / cell), Math.floor(a.p.z / cell));
+      (grid.get(k) || grid.set(k, []).get(k)).push(a.i);
+    });
+    const out = [];
+    list.forEach(a => {
+      const cx = Math.floor(a.p.x / cell), cy = Math.floor(a.p.y / cell), cz = Math.floor(a.p.z / cell);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+        const g = grid.get(keyOf(cx + dx, cy + dy, cz + dz)); if (!g) continue;
+        g.forEach(j => {
+          if (j <= a.i) return;
+          const b = list[j];
+          const d = a.p.distanceTo(b.p);
+          if (d > .4 && d < props(a.el).cov + props(b.el).cov + .4) out.push({ a: a.i, b: j, o: 1 });
+        });
+      }
+    });
+    // A hydrogen has a single covalent bond: when it sits between two atoms keep the closest one.
+    // The other contact is shown as a hydrogen bond (shared proton) instead.
+    const bestH = new Map();
+    out.forEach((b, n) => {
+      [[b.a, b.b], [b.b, b.a]].forEach(([h, o]) => {
+        if (list[h].el !== "H" || list[o].el === "H") return;
+        const d = list[h].p.distanceTo(list[o].p), cur = bestH.get(h);
+        if (!cur || d < cur.d) bestH.set(h, { n, d });
+      });
+    });
+    return out.filter((b, n) => {
+      const ha = list[b.a].el === "H", hb = list[b.b].el === "H";
+      if (ha && hb) return true;
+      if (ha && bestH.get(b.a).n !== n) return false;
+      if (hb && bestH.get(b.b).n !== n) return false;
+      return true;
+    });
+  }
+
+  // Hydrogen bonds D–H···A (D, A = N, O, F): H···A ≤ 2.5 Å and angle D–H···A ≥ 120°.
+  // "shared" marks a proton that is almost halfway (H···A within covalent reach).
+  const HB_EL = { N: 1, O: 1, F: 1 };
+  function findHBonds(list, bonds) {
+    if (list.length > 3000) return [];
+    const donorOf = new Map();
+    bonds.forEach(b => {
+      const A = list[b.a], B = list[b.b];
+      if (A.el === "H" && HB_EL[B.el]) donorOf.set(b.a, b.b);
+      if (B.el === "H" && HB_EL[A.el]) donorOf.set(b.b, b.a);
+    });
+    const acc = list.filter(a => HB_EL[a.el]);
+    const out = [];
+    donorOf.forEach((d, h) => {
+      const H = list[h].p, D = list[d].p;
+      acc.forEach(a => {
+        if (a.i === d) return;
+        const r = H.distanceTo(a.p);
+        if (r > 2.5) return;
+        const v1 = D.clone().sub(H), v2 = a.p.clone().sub(H);
+        const ang = v1.angleTo(v2) * 180 / Math.PI;
+        if (ang < 120) return;
+        out.push({ h, d, a: a.i, r, ang, shared: r < props("H").cov + props(a.el).cov + .4 });
+      });
+    });
+    return out;
+  }
+
+  // ---------- superposition (Horn's quaternion method) ----------
+  function centered(pts) {
+    const c = new THREE.Vector3();
+    pts.forEach(p => c.add(p)); c.divideScalar(pts.length);
+    return pts.map(p => p.clone().sub(c));
+  }
+  function jacobiMaxEig(A) {
+    const n = 4, a = A.map(r => r.slice()), v = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+    for (let sweep = 0; sweep < 60; sweep++) {
+      let off = 0;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) off += a[p][q] * a[p][q];
+      if (off < 1e-22) break;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+        if (Math.abs(a[p][q]) < 1e-300) continue;
+        const th = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+        const t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+        const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+        for (let k = 0; k < n; k++) { const x = a[k][p], y = a[k][q]; a[k][p] = c * x - s * y; a[k][q] = s * x + c * y; }
+        for (let k = 0; k < n; k++) { const x = a[p][k], y = a[q][k]; a[p][k] = c * x - s * y; a[q][k] = s * x + c * y; }
+        for (let k = 0; k < n; k++) { const x = v[k][p], y = v[k][q]; v[k][p] = c * x - s * y; v[k][q] = s * x + c * y; }
+      }
+    }
+    let best = 0;
+    for (let k = 1; k < n; k++) if (a[k][k] > a[best][best]) best = k;
+    return [v[0][best], v[1][best], v[2][best], v[3][best]];
+  }
+  // P, Q: centred point lists, same length. Returns the rotation taking P onto Q and the RMSD after it.
+  function superpose(P, Q) {
+    let Sxx = 0, Sxy = 0, Sxz = 0, Syx = 0, Syy = 0, Syz = 0, Szx = 0, Szy = 0, Szz = 0;
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i], q = Q[i];
+      Sxx += p.x * q.x; Sxy += p.x * q.y; Sxz += p.x * q.z;
+      Syx += p.y * q.x; Syy += p.y * q.y; Syz += p.y * q.z;
+      Szx += p.z * q.x; Szy += p.z * q.y; Szz += p.z * q.z;
+    }
+    const N = [
+      [Sxx + Syy + Szz, Syz - Szy, Szx - Sxz, Sxy - Syx],
+      [Syz - Szy, Sxx - Syy - Szz, Sxy + Syx, Szx + Sxz],
+      [Szx - Sxz, Sxy + Syx, -Sxx + Syy - Szz, Syz + Szy],
+      [Sxy - Syx, Szx + Sxz, Syz + Szy, -Sxx - Syy + Szz]
+    ];
+    const e = jacobiMaxEig(N);
+    const rms = quat => {
+      let s = 0;
+      for (let i = 0; i < P.length; i++) s += P[i].clone().applyQuaternion(quat).distanceToSquared(Q[i]);
+      return Math.sqrt(s / P.length);
+    };
+    const q1 = new THREE.Quaternion(e[1], e[2], e[3], e[0]).normalize();
+    const q2 = q1.clone().conjugate();
+    const r1 = rms(q1), r2 = rms(q2);
+    return r1 <= r2 ? { quat: q1, rmsd: r1 } : { quat: q2, rmsd: r2 };
+  }
+  const sameAtoms = (A, B) => A.length === B.length && A.every((a, i) => a.el === B[i].el);
+
+  // α-amino-acid configuration (L/D) from the CORN arrangement around Cα: N, C′(OO), Cβ, H
+  function alphaChirality(list, bonds) {
+    const nb = list.map(() => []);
+    bonds.forEach(b => { nb[b.a].push(b.b); nb[b.b].push(b.a); });
+    for (const a of list) {
+      if (a.el !== "C" || nb[a.i].length !== 4) continue;
+      const ns = nb[a.i].map(j => list[j]);
+      const N = ns.filter(x => x.el === "N"), H = ns.filter(x => x.el === "H"), Cs = ns.filter(x => x.el === "C");
+      if (N.length !== 1 || H.length !== 1 || Cs.length !== 2) continue;
+      const isCarboxyl = c => nb[c.i].filter(j => list[j].el === "O").length >= 2;
+      const cp = Cs.find(isCarboxyl), cb = Cs.find(c => c !== cp);
+      if (!cp || !cb || isCarboxyl(cb)) continue;
+      const v1 = N[0].p.clone().sub(a.p), v2 = cp.p.clone().sub(a.p), v3 = cb.p.clone().sub(a.p);
+      return v1.dot(v2.cross(v3)) > 0 ? "L" : "D";
+    }
+    return null;
+  }
+
+  // Energy in the comment line: the first token that is a decimal number (optionally after "E=" / "energy:")
+  function energyToken(comment) {
+    const toks = comment.trim().split(/\s+/);
+    for (let k = 0; k < toks.length; k++) {
+      const t = toks[k].replace(/^(e|energy)[:=]/i, "");
+      if (/^[-+]?(\d+\.\d*|\.\d+|\d+(\.\d*)?[eE][-+]?\d+)$/.test(t)) return { value: parseFloat(t), index: k };
+    }
+    return null;
+  }
+
+  // Prepare loaded structures: labels, energies, common orientation, bonds, L/D, mirror pairs
+  function prepareFrames(frames) {
+    const toks = frames.map(f => {
+      if (f.fmt !== "mol") return energyToken(f.comment);
+      const fe = fieldEnergy(f.fields);
+      if (fe) { f.energyKey = fe.key; f.unitHint = fe.unit; return { value: fe.value, index: -1 }; }
+      return null;
+    });
+    const hasE = frames.length > 1 && toks.every(Boolean);
+    frames.forEach((f, k) => {
+      let label = f.fmt === "mol" ? f.name : f.comment.trim();
+      if (hasE) {
+        f.energy = toks[k].value;
+        if (f.fmt !== "mol") label = f.comment.trim().split(/\s+/).filter((_, j) => j !== toks[k].index).join(" ").replace(/^(energy|e)\s*[:=]\s*/i, "").replace(/\s*\b(energy|e)\s*[:=]\s*$/i, "").trim();
+      }
+      f.label = label || (f.src + (f.nInSrc > 1 ? " #" + (f.idxInSrc + 1) : ""));
+      f.flat = f.atoms.length > 2 && f.atoms.every(a => Math.abs(a.z) < 1e-4);
+    });
+    // Repeated labels (e.g. every frame says "TRAJECTORY GEOMETRY") become step numbers
+    const seen = new Map();
+    frames.forEach(f => seen.set(f.label, (seen.get(f.label) || 0) + 1));
+    const isTraj = frames.length > 1 && (frames.some(f => /trajector|\bmd\b|step|paso|frame/i.test(f.comment)) || [...seen.values()].some(n => n > 1));
+    if ([...seen.values()].some(n => n > 1)) frames.forEach((f, k) => { f.label = "Paso " + (k + 1); });
+    let refK = 0;
+    if (hasE) frames.forEach((f, k) => { if (f.energy < frames[refK].energy) refK = k; });
+    const ref = frames[refK];
+    const raw = f => f.atoms.map(a => new THREE.Vector3(a.x, a.y, a.z));
+    const pf = principalFrame(raw(ref));
+    const project = (pts, fr) => pts.map(p => { const d = p.clone().sub(fr.c); return new THREE.Vector3(d.dot(fr.basis[0]), d.dot(fr.basis[1]), d.dot(fr.basis[2])); });
+    ref.pos = project(raw(ref), pf);
+    frames.forEach(f => {
+      if (f === ref) return;
+      if (sameAtoms(f.atoms, ref.atoms)) {
+        const C = centered(raw(f));
+        const { quat } = superpose(C, ref.pos);
+        f.pos = C.map(p => p.applyQuaternion(quat));
+      } else {
+        f.pos = project(raw(f), principalFrame(raw(f)));
+      }
+    });
+    frames.forEach(f => {
+      const list = f.atoms.map((a, i) => ({ i, el: a.el, p: f.pos[i] }));
+      f.bonds = f.fileBonds ? f.fileBonds.map(b => ({ a: b.a, b: b.b, o: b.o })) : inferBonds(list);
+      f.chir = alphaChirality(list, f.bonds);
+    });
+    // mirror-image pairs (same atoms, RMSD ≈ 0 after reflecting one of them)
+    const pairs = [];
+    if (frames.length <= 150) {
+      for (let i = 0; i < frames.length; i++) for (let j = i + 1; j < frames.length; j++) {
+        const A = frames[i], B = frames[j];
+        if (!sameAtoms(A.atoms, B.atoms)) continue;
+        const mirrored = B.pos.map(p => new THREE.Vector3(-p.x, p.y, p.z));
+        const m = superpose(centered(mirrored), A.pos).rmsd;
+        if (m > .05) continue;
+        const d = superpose(B.pos, A.pos).rmsd;
+        if (d > .2) pairs.push({ a: i, b: j, mirror: m, direct: d });
+      }
+    }
+    return { hasE, refK, pairs, isTraj };
+  }
+
+  // ---------- molecule data ----------
+  function buildData() {
+    if (state.source === "lysine") {
+      const g = GEO[state.form];
+      atoms = g.atoms.map((a, i) => ({ i, el: a[0], p: new THREE.Vector3(a[1], a[2], a[3]), q: a[4], nb: [], orig: [a[1], a[2], a[3]] }));
+      bondList = g.bonds.map(b => ({ a: b[0], b: b[1], o: b[2] }));
+      if (state.form === "physio") bondList.forEach(b => { if (b.a === 7 && (b.b === 8 || b.b === 9)) b.o = 1.5; });
+      fileComment = "";
+    } else {
+      const fr = state.file.frames[state.file.frame];
+      atoms = fr.atoms.map((a, i) => ({ i, el: a.el, p: fr.pos[i].clone(), q: a.q || 0, pq: a.pq, nb: [], orig: [a.x, a.y, a.z] }));
+      bondList = fr.bonds.map(b => ({ a: b.a, b: b.b, o: b.o }));
+      fileComment = fr.comment;
+    }
+    bondList.forEach(b => { atoms[b.a].nb.push({ j: b.b, o: b.o }); atoms[b.b].nb.push({ j: b.a, o: b.o }); });
+    hbonds = findHBonds(atoms, bondList);
+    parentOf = atoms.map(a => (a.el === "H" && a.nb.length) ? a.nb[0].j : a.i);
+    // per-element numbering for files (C1, C2, … H1, H2, …)
+    const count = {};
+    atoms.forEach(a => { count[a.el] = (count[a.el] || 0) + 1; a.num = count[a.el]; });
+  }
+  let mirrorX = 0;   // x of the mirror plane (before re-centring)
+  // Mirror plane: 1.2 Å beyond the structure's right-hand edge
+  function mirrorXOf(ps, els) {
+    const k = state.mode === "space" ? 1 : .5;
+    let mx = -Infinity;
+    ps.forEach((q, i) => { const x = q.x + props(els[i]).vdw * k; if (x > mx) mx = x; });
+    return mx + 1.2;
+  }
+  let curShift = 0;   // sideways shift currently applied to the drawn structure (changes during a morph)
+  function computeRadius() {
+    let r = 0;
+    if (state.mirror) {
+      mirrorX = mirrorXOf(atoms.map(a => a.p), atoms.map(a => a.el));
+      atoms.forEach(a => { const d = Math.hypot(a.p.x - mirrorX, a.p.y, a.p.z); r = Math.max(r, d + props(a.el).vdw * .5); });
+    } else {
+      atoms.forEach(a => { r = Math.max(r, a.p.length() + props(a.el).vdw * .5); });
+    }
+    molRadius = Math.max(1.5, r);
+  }
+
+  function atomName(i) {
+    const a = atoms[i];
+    if (state.source === "file") return a.el + a.num;
+    if (a.el !== "H") return HEAVY[i].name;
+    const par = parentOf[i];
+    const sibs = atoms[par].nb.filter(n => atoms[n.j].el === "H").map(n => n.j);
+    return "H" + (sibs.length > 1 ? (sibs.indexOf(i) + 1) : "") + "–" + HEAVY[par].name;
+  }
+  function groupOf(i) {
+    if (state.source !== "lysine") return null;
+    const h = parentOf[i];
+    return GROUPS.find(g => g.heavy.includes(h)).id;
+  }
+
+  // ---------- meshes ----------
+  function clearRoot() {
+    while (root.children.length) { const c = root.children.pop(); if (c.material && !c.userData.ghost) c.material.dispose(); if (c.userData.plane && !c.userData.mirror) c.geometry.dispose(); }
+    atomMeshes = []; bondMeshes = [];
+  }
+  function addCyl(p1, p2, r, owner, hb, ends) {
+    const dir = new THREE.Vector3().subVectors(p2, p1);
+    const len = dir.length();
+    const mat = new THREE.MeshStandardMaterial({ color: elColor(atoms[owner].el), roughness: .5, metalness: .05, transparent: true, opacity: 1 });
+    const m = new THREE.Mesh(geoms.cyl, mat);
+    m.scale.set(r, len, r);
+    m.position.copy(p1).addScaledVector(dir, .5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+    m.userData = { owner, hb, ends };
+    root.add(m); bondMeshes.push(m);
+  }
+  function addBondHalves(a, b, off, r) {
+    const hb = atoms[a].el === "H" || atoms[b].el === "H";
+    const pa = atoms[a].p.clone().add(off), pb = atoms[b].p.clone().add(off);
+    const mid = pa.clone().lerp(pb, .5);
+    addCyl(pa, mid, r, a, hb, { a, b, t0: 0, t1: .5, off: off.clone() }); addCyl(mid, pb, r, b, hb, { a, b, t0: .5, t1: 1, off: off.clone() });
+  }
+  function addDashed(a, b, off, r) {
+    const pa = atoms[a].p.clone().add(off), pb = atoms[b].p.clone().add(off);
+    const n = 6;
+    for (let k = 0; k < n; k++) {
+      const t0 = (k + .2) / n, t1 = (k + .75) / n;
+      addCyl(pa.clone().lerp(pb, t0), pa.clone().lerp(pb, t1), r, (k < n / 2) ? a : b, false, { a, b, t0, t1, off: off.clone() });
+    }
+  }
+  function sideVector(a, b, preferOrder) {
+    // Perpendicular to bond a–b, pointing toward another neighbour of a (in the sp2 plane)
+    const axis = new THREE.Vector3().subVectors(atoms[b].p, atoms[a].p).normalize();
+    const other = (preferOrder && atoms[a].nb.find(n => n.j !== b && n.o === preferOrder)) ||
+      atoms[a].nb.find(n => n.j !== b && atoms[n.j].el !== "H") || atoms[a].nb.find(n => n.j !== b);
+    let v = other ? new THREE.Vector3().subVectors(atoms[other.j].p, atoms[a].p) : new THREE.Vector3(0, 0, 1);
+    v.addScaledVector(axis, -v.dot(axis));
+    if (v.lengthSq() < 1e-6) v = new THREE.Vector3(0, 0, 1).cross(axis);
+    return v.normalize();
+  }
+
+  function build() {
+    if (anim) { anim = null; if (playing) setTimeout(afterStep, 0); }
+    clearRoot();
+    buildData();
+    computeRadius();
+    geoms = atoms.length > 400 ? GEOMS.lo : GEOMS.hi;
+    atoms.forEach(a => {
+      const mat = new THREE.MeshStandardMaterial({ color: elColor(a.el), roughness: a.el === "H" ? .55 : .4, metalness: .05, transparent: true, opacity: 1 });
+      const m = new THREE.Mesh(geoms.sphere, mat);
+      const r = atomRadius(a.el);
+      m.scale.setScalar(r);
+      m.position.copy(a.p);
+      m.userData = { i: a.i, r };
+      root.add(m); atomMeshes.push(m);
+    });
+    const bondR = state.mode === "ball" ? .11 : state.mode === "stick" ? .15 : 0;
+    if (bondR > 0) {
+      bondList.forEach(b => {
+        const r = bondR;
+        if (b.o === 2 && state.mode === "ball") {
+          const side = sideVector(b.a, b.b).multiplyScalar(r * 1.25);
+          addBondHalves(b.a, b.b, side.clone().negate(), r * .62);
+          addBondHalves(b.a, b.b, side, r * .62);
+        } else if (b.o === 2) {
+          const side = sideVector(b.a, b.b).multiplyScalar(r * 1.9);
+          addBondHalves(b.a, b.b, new THREE.Vector3(), r);
+          addBondHalves(b.a, b.b, side, r * .5);
+        } else if (b.o === 3) {
+          const side = sideVector(b.a, b.b).multiplyScalar(state.mode === "ball" ? r * 1.5 : r * 2.1);
+          const rr = state.mode === "ball" ? r * .5 : r * .55;
+          addBondHalves(b.a, b.b, side.clone().negate(), rr);
+          addBondHalves(b.a, b.b, new THREE.Vector3(), rr);
+          addBondHalves(b.a, b.b, side, rr);
+        } else if (b.o === 1.5) {
+          const side = sideVector(b.a, b.b, 1.5).multiplyScalar(r * 2.2);
+          addBondHalves(b.a, b.b, new THREE.Vector3(), r);
+          addDashed(b.a, b.b, side, r * .5);
+        } else {
+          addBondHalves(b.a, b.b, new THREE.Vector3(), r);
+        }
+      });
+    }
+    buildHBonds();
+    buildGhost();
+    buildMirror();
+    buildMeasure();
+    if (state.sel !== null && state.sel >= atoms.length) state.sel = null;
+    buildLabels();
+    applyVisibility();
+    renderPanel();
+  }
+
+  const hbMat = new THREE.MeshStandardMaterial({ color: 0xb7700a, roughness: .6 });
+  function buildHBonds() {
+    if (state.mode === "space") return;
+    hbonds.forEach(hb => {
+      const p1 = atoms[hb.h].p, p2 = atoms[hb.a].p;
+      const dir = new THREE.Vector3().subVectors(p2, p1), len = dir.length();
+      const unit = dir.clone().normalize();
+      const r = hb.shared ? .05 : .035;
+      const seg = .16, gap = .11;
+      // start just outside the hydrogen and stop at the acceptor's surface
+      const t0 = atomRadius("H") * .6, t1 = len - atomRadius(atoms[hb.a].el) * .9;
+      for (let s = t0; s < t1; s += seg + gap) {
+        const e = Math.min(t1, s + seg);
+        const m = new THREE.Mesh(geoms.cyl, hbMat);
+        m.scale.set(r, e - s, r);
+        m.position.copy(p1).addScaledVector(unit, (s + e) / 2);
+        m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), unit);
+        m.userData = { hbond: true, ghost: true, h: true };   // treated like the overlay: shared material, hidden while morphing
+        root.add(m);
+      }
+    });
+  }
+
+  // Second structure drawn as a translucent overlay, superposed on the one shown
+  const ghostMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: .5, transparent: true, opacity: .42, depthWrite: false });
+  let cmpInfo = null;
+  function buildGhost() {
+    cmpInfo = null;
+    const f = state.file;
+    if (state.source !== "file" || !f || state.cmp === null || state.cmp === f.frame) return;
+    const A = f.frames[f.frame], B = f.frames[state.cmp];
+    if (!sameAtoms(A.atoms, B.atoms)) { cmpInfo = { error: "Estas dos estructuras no tienen los mismos átomos en el mismo orden, así que no se pueden superponer." }; return; }
+    const { quat, rmsd } = superpose(B.pos, A.pos);
+    const P = B.pos.map(p => p.clone().applyQuaternion(quat));
+    const mirrored = B.pos.map(p => new THREE.Vector3(-p.x, p.y, p.z));
+    const mir = superpose(mirrored, A.pos).rmsd;
+    cmpInfo = { rmsd, mirror: mir, label: B.label };
+    const isH = i => B.atoms[i].el === "H";
+    P.forEach((p, i) => {
+      const m = new THREE.Mesh(geoms.sphere, ghostMat);
+      m.scale.setScalar(isH(i) ? .1 : .16); m.position.copy(p);
+      m.userData = { ghost: true, cmp: true, h: isH(i) };
+      root.add(m);
+    });
+    B.bonds.forEach(b => {
+      const p1 = P[b.a], p2 = P[b.b], dir = new THREE.Vector3().subVectors(p2, p1), len = dir.length();
+      const m = new THREE.Mesh(geoms.cyl, ghostMat);
+      m.scale.set(.07, len, .07);
+      m.position.copy(p1).addScaledVector(dir, .5);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+      m.userData = { ghost: true, cmp: true, h: isH(b.a) || isH(b.b) };
+      root.add(m);
+    });
+  }
+
+  // ---------- mirror view: the structure, a mirror plane, and its reflection ----------
+  let tagNodes = [], mirrorShift = 0, mirrorAtoms = [], mirrorBonds = [];
+  const mirrorPlaneMat = new THREE.MeshBasicMaterial({ color: 0x8899aa, transparent: true, opacity: .14, side: THREE.DoubleSide, depthWrite: false });
+  const mirrorEdgeMat = new THREE.LineBasicMaterial({ color: 0x8899aa, transparent: true, opacity: .55 });
+  function chirLabel() {
+    if (state.source === "lysine") return { name: "L-Lisina", c: "L", mName: "D-Lisina", mc: "D" };
+    const f = state.file, fr = f.frames[f.frame];
+    const pr = f.pairs.find(p => p.a === f.frame || p.b === f.frame);
+    const partner = pr ? f.frames[pr.a === f.frame ? pr.b : pr.a] : null;
+    const c = fr.chir, mc = c === "L" ? "D" : c === "D" ? "L" : null;
+    return { name: fr.label, c, mName: partner ? partner.label : "imagen especular", mc, partner: !!partner };
+  }
+  function refreshTags() {
+    if (tagNodes.length !== 2) return;
+    const L = chirLabel();
+    const set = (n, title, sub, cls) => { n.el.className = "tag3d" + (cls ? " " + cls : ""); n.el.innerHTML = "<b>" + esc(title) + "</b>" + esc(sub); };
+    set(tagNodes[0], L.c ? L.c : "Original", L.name, L.c);
+    set(tagNodes[1], L.mc ? L.mc : "Espejo", L.mName, L.mc);
+  }
+  function buildMirror() {
+    tagNodes.forEach(n => n.el.remove()); tagNodes = []; mirrorAtoms = []; mirrorBonds = [];
+    mirrorShift = 0; curShift = 0;
+    if (!state.mirror) return;
+    const m = mirrorX;
+    const up = new THREE.Vector3(0, 1, 0);
+    // reflect every drawn piece except the comparison overlay
+    root.children.slice().forEach(o => {
+      if (o.userData.cmp) return;
+      const c = o.clone();                  // shares geometry and material
+      c.userData = Object.assign({}, o.userData, { ghost: true, mirror: true, h: !!o.userData.h || (o.userData.i !== undefined && atoms[o.userData.i].el === "H") || !!o.userData.hb });
+      c.position.x = 2 * m - o.position.x;
+      if (o.userData.i !== undefined && o.geometry === geoms.sphere) mirrorAtoms.push(c);
+      else if (o.userData.ends) mirrorBonds.push(c);
+      if (o.geometry === geoms.cyl) {
+        const d = up.clone().applyQuaternion(o.quaternion); d.x = -d.x;
+        c.quaternion.setFromUnitVectors(up, d.normalize());
+      }
+      root.add(c);
+    });
+    // the mirror itself
+    let maxY = 0, maxZ = 0;
+    atoms.forEach(a => { maxY = Math.max(maxY, Math.abs(a.p.y)); maxZ = Math.max(maxZ, Math.abs(a.p.z)); });
+    const H = 2 * maxY + 2.4, D = 2 * maxZ + 2.4;
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(D, H), mirrorPlaneMat);
+    plane.rotation.y = Math.PI / 2; plane.position.x = m;
+    plane.userData = { ghost: true, cmp: true, plane: true };
+    const edge = new THREE.LineSegments(new THREE.EdgesGeometry(plane.geometry), mirrorEdgeMat);
+    edge.rotation.y = Math.PI / 2; edge.position.x = m;
+    edge.userData = { ghost: true, cmp: true, plane: true };
+    root.add(plane, edge);
+    // centre the pair on the mirror
+    mirrorShift = -m; curShift = mirrorShift;
+    root.children.forEach(o => { o.position.x += mirrorShift; });
+    // L / D tags above each copy
+    const L = chirLabel();
+    const top = maxY + .8;
+    const mk = (x, title, sub, cls) => {
+      const d = document.createElement("div");
+      d.className = "tag3d" + (cls ? " " + cls : "");
+      d.innerHTML = "<b>" + esc(title) + "</b>" + esc(sub);
+      $("tags").appendChild(d);
+      tagNodes.push({ el: d, which: x });
+    };
+    mk("orig", L.c ? L.c : "Original", L.name, L.c);
+    mk("mirror", L.mc ? L.mc : "Espejo", L.mName, L.mc);
+  }
+
+  function buildLabels() {
+    labelsEl.innerHTML = "";
+    labelNodes = [];
+    atoms.forEach(a => {
+      if (a.el === "H") return;
+      const d = document.createElement("div");
+      d.className = "lbl";
+      d.textContent = atomName(a.i);
+      if (a.q) { const s = document.createElement("span"); s.className = "q"; s.textContent = a.q > 0 ? "+" : "−"; d.appendChild(s); }
+      labelsEl.appendChild(d);
+      labelNodes.push({ i: a.i, el: d });
+    });
+  }
+
+  function isActive(i) {
+    if (!state.group || state.source !== "lysine") return true;
+    return groupOf(i) === state.group;
+  }
+  function applyVisibility() {
+    const accent = new THREE.Color(css("--accent"));
+    atomMeshes.forEach(m => {
+      const i = m.userData.i, a = atoms[i];
+      m.visible = state.showH || a.el !== "H";
+      const act = isActive(i);
+      m.material.opacity = act ? 1 : .14;
+      m.material.depthWrite = act;
+      m.material.color.copy(elColor(a.el));
+      if (state.sel === i) { m.material.emissive.copy(accent); m.material.emissiveIntensity = .55; }
+      else { m.material.emissive.setRGB(0, 0, 0); }
+    });
+    bondMeshes.forEach(m => {
+      const o = m.userData.owner;
+      m.visible = state.showH || !m.userData.hb;
+      const act = isActive(o);
+      m.material.opacity = act ? 1 : .14;
+      m.material.depthWrite = act;
+      m.material.color.copy(elColor(atoms[o].el));
+    });
+    ghostMat.color.set(css("--mirror"));
+    mirrorPlaneMat.color.set(css("--muted")); mirrorEdgeMat.color.set(css("--muted"));
+    measureMat.color.set(css("--accent"));
+    hbMat.color.set(css("--hbond"));
+    root.children.forEach(m => {
+      if (anim && m.userData.ghost && !m.userData.plane && !(m.userData.mirror && !m.userData.hbond)) { m.visible = false; return; }
+      if (m.userData.hbond) m.visible = state.showH && state.hb;
+      else if (m.userData.plane) m.visible = true;
+      else if (m.userData.mirror) m.visible = state.showH || !m.userData.h;
+      else if (m.userData.ghost) m.visible = state.showH || !m.userData.h;
+    });
+    labelsEl.style.display = state.labels ? "" : "none";
+    labelNodes.forEach(n => { n.el.style.opacity = isActive(n.i) ? 1 : .3; });
+  }
+
+  // ---------- camera fit ----------
+  let fitDist = 14;
+  function fit(reset) {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    const tall = w < h;
+    const vf = THREE.MathUtils.degToRad(camera.fov) / 2;
+    const hf = Math.atan(Math.tan(vf) * camera.aspect);
+    const rad = molRadius * .92;
+    fitDist = Math.max(rad / Math.sin(vf), rad / Math.sin(hf)) * 1.02;
+    camera.near = Math.max(.05, fitDist / 200); camera.far = fitDist * 8;
+    camera.updateProjectionMatrix();
+    if (reset) {
+      controls.target.set(0, 0, 0);
+      // On tall stages, stand the molecule upright and tilt the view sideways instead of from above
+      root.rotation.set(0, 0, tall ? Math.PI / 2 : 0);
+      if (state.mirror) (tall ? camera.position.set(-1.0, .6, 1) : camera.position.set(.6, .9, 1)).normalize().multiplyScalar(fitDist);
+      else (tall ? camera.position.set(-1.2, 0, 1) : camera.position.set(0, 1.2, 1)).normalize().multiplyScalar(fitDist);
+      camera.up.set(0, 1, 0);
+    }
+    controls.minDistance = Math.max(1.5, molRadius * .4);
+    controls.maxDistance = fitDist * 3;
+  }
+  new ResizeObserver(() => fit(false)).observe(stage);
+
+  // ---------- picking ----------
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  function pick(ev) {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const cands = atomMeshes.filter(m => m.visible && m.material.opacity > .5).concat(mirrorAtoms.filter(m => m.visible && m.material.opacity > .5));
+    const hits = ray.intersectObjects(cands, false);
+    return hits.length ? { i: hits[0].object.userData.i, mirror: !!hits[0].object.userData.mirror } : null;
+  }
+  let down = null;
+  canvas.addEventListener("pointerdown", e => { down = { x: e.clientX, y: e.clientY }; canvas.classList.add("dragging"); });
+  window.addEventListener("pointerup", e => {
+    canvas.classList.remove("dragging");
+    if (!down) return;
+    const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+    down = null;
+    if (moved > 5 || e.target !== canvas || e.button !== 0) return;
+    onAtomClick(pick(e));
+  });
+  let hoverQueued = false;
+  canvas.addEventListener("pointermove", e => {
+    if (down || hoverQueued) return;
+    hoverQueued = true;
+    requestAnimationFrame(() => { hoverQueued = false; canvas.classList.toggle("hovering", pick(e) !== null); });
+  });
+
+  function select(i, mirror) {
+    state.sel = i;
+    state.selMirror = i !== null && !!mirror && state.mirror;
+    if (i !== null) setSpin(false);
+    applyVisibility(); renderPanel();
+  }
+  function onAtomClick(h) {
+    if (state.measure) { if (h) addMeasure(h); return; }
+    if (!h) { select(null); return; }
+    if (h.i === state.sel && !!h.mirror === !!state.selMirror) select(null);
+    else select(h.i, h.mirror);
+  }
+
+  // ---------- measuring: 2 atoms = distance, 3 = angle, 4 = dihedral ----------
+  const measureMat = new THREE.MeshBasicMaterial({ color: 0x0b7480 });
+  let measureTag = null;
+  function posOf(pk) {
+    const q = atoms[pk.i].p;
+    return pk.mirror ? new THREE.Vector3(2 * mirrorX - q.x, q.y, q.z) : q.clone();
+  }
+  const angleAt = (a, b, c) => a.clone().sub(b).angleTo(c.clone().sub(b)) * 180 / Math.PI;
+  function dihedral(a, b, c, d) {
+    const b1 = b.clone().sub(a), b2 = c.clone().sub(b), b3 = d.clone().sub(c);
+    const n1 = b1.clone().cross(b2), n2 = b2.clone().cross(b3);
+    const y = b2.length() * b1.dot(n2), x = n1.dot(n2);
+    return Math.atan2(y, x) * 180 / Math.PI;
+  }
+  function startMeasure(i, mirror) {
+    state.measure = { picks: [{ i, mirror: !!mirror && state.mirror }] };
+    measureChanged();
+  }
+  function addMeasure(h) {
+    const m = state.measure, P = m.picks, last = P[P.length - 1];
+    const pk = { i: h.i, mirror: !!h.mirror };
+    if (last && last.i === pk.i && last.mirror === pk.mirror) return;
+    if (P.length >= 4 || (P.length && P[0].mirror !== pk.mirror)) m.picks = [pk];
+    else P.push(pk);
+    state.sel = pk.i; state.selMirror = pk.mirror;
+    measureChanged();
+  }
+  function endMeasure() { state.measure = null; measureChanged(); }
+  function measureChanged() {
+    canvas.classList.toggle("measuring", !!state.measure);
+    $("mHint").hidden = !state.measure;
+    buildMeasure(); applyVisibility(); renderPanel();
+  }
+  function measureValues() {
+    const P = state.measure.picks.map(posOf), N = state.measure.picks.map(pk => atomName(pk.i));
+    const rows = [];
+    for (let k = 0; k + 1 < P.length; k++) rows.push(["Distancia " + N[k] + "–" + N[k + 1], fmt(P[k].distanceTo(P[k + 1])) + " Å"]);
+    for (let k = 0; k + 2 < P.length; k++) rows.push(["Ángulo " + N[k] + "–" + N[k + 1] + "–" + N[k + 2], angleAt(P[k], P[k + 1], P[k + 2]).toFixed(1) + "°"]);
+    if (P.length === 4) rows.push(["Diedro " + N.join("–"), (dihedral(P[0], P[1], P[2], P[3]) >= 0 ? "+" : "−") + Math.abs(dihedral(P[0], P[1], P[2], P[3])).toFixed(1) + "°"]);
+    return rows;
+  }
+  function buildMeasure() {
+    root.children.filter(o => o.userData.measure).forEach(o => root.remove(o));
+    if (measureTag) { measureTag.el.remove(); measureTag = null; }
+    if (!state.measure || state.measure.picks.some(pk => pk.i >= atoms.length)) return;
+    measureMat.color.set(css("--accent"));
+    const P = state.measure.picks.map(pk => posOf(pk).add(new THREE.Vector3(mirrorShift, 0, 0)));
+    const up = new THREE.Vector3(0, 1, 0);
+    for (let k = 0; k + 1 < P.length; k++) {
+      const a = P[k], b = P[k + 1], dir = b.clone().sub(a), len = dir.length(), u = dir.clone().normalize();
+      for (let s = 0; s < len; s += .22) {
+        const e = Math.min(len, s + .13);
+        const m = new THREE.Mesh(geoms.cyl, measureMat);
+        m.scale.set(.03, e - s, .03);
+        m.position.copy(a).addScaledVector(u, (s + e) / 2);
+        m.quaternion.setFromUnitVectors(up, u);
+        m.userData = { ghost: true, cmp: true, measure: true };
+        root.add(m);
+      }
+    }
+    const rows = measureValues();
+    if (rows.length) {
+      const d = document.createElement("div");
+      d.className = "mtag";
+      d.textContent = rows[rows.length - 1][1];
+      $("tags").appendChild(d);
+      const c = new THREE.Vector3(); P.forEach(q => c.add(q)); c.divideScalar(P.length);
+      if (P.length === 2) c.copy(P[0]).lerp(P[1], .5);
+      measureTag = { el: d, local: c };
+    }
+  }
+  function centerOn(i, mirror) {
+    const mesh = mirror ? mirrorAtoms.find(c => c.userData.i === i) : atomMeshes[i];
+    if (!mesh) return;
+    mesh.getWorldPosition(v);
+    const d = v.clone().sub(controls.target);
+    controls.target.add(d); camera.position.add(d);
+  }
+
+  // ---------- panel ----------
+  // Replace markup only when it changed, so buttons are not swapped out under the pointer during playback
+  function setHTML(el, html) { if (el._html !== html) { el._html = html; el.innerHTML = html; } }
+  const sub = n => String(n).replace(/\d/g, d => "₀₁₂₃₄₅₆₇₈₉"[d]);
+  const chargeSup = q => !q ? "" : (Math.abs(q) > 1 ? String(Math.abs(q)).replace(/\d/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[d]) : "") + (q > 0 ? "⁺" : "⁻");
+  function hillOrder(counts) {
+    const els = Object.keys(counts);
+    if (counts.C) return ["C", "H"].filter(e => counts[e]).concat(els.filter(e => e !== "C" && e !== "H").sort());
+    return els.sort();
+  }
+  function textOn(el) {
+    const c = elColor(el);
+    return (0.299 * c.r + 0.587 * c.g + 0.114 * c.b) > .55 ? "#13212b" : "#ffffff";
+  }
+  function fmt(x, d = 3) { return x.toFixed(d); }
+
+  function renderPanel() {
+    const isLys = state.source === "lysine";
+    renderEnergy();
+    $("secForm").hidden = !isLys;
+    $("secGroups").hidden = !isLys;
+    $("openSmall").hidden = isLys;
+    $("openXyz").hidden = !isLys;
+
+    // detail
+    const det = $("detail");
+    if (state.sel === null) {
+      setHTML(det, '<p class="empty">Haz clic en cualquier esfera del modelo para ver qué átomo es, a qué está unido y la longitud de cada enlace.</p>');
+    } else {
+      const a = atoms[state.sel];
+      const side = state.mirror ? chirLabel() : null;
+      const onMirror = !!state.selMirror && state.mirror;
+      let desc = "", sublabel = props(a.el).name;
+      if (isLys) {
+        const heavyIdx = parentOf[a.i];
+        desc = a.el === "H" ? "Hidrógeno unido a " + HEAVY[heavyIdx].name + "." : ((state.form === "physio" && HEAVY_PHYSIO[a.i]) || HEAVY[a.i].desc);
+        sublabel += " · " + GROUPS.find(g => g.id === groupOf(a.i)).label;
+      } else {
+        sublabel += " · átomo " + (a.i + 1) + " del archivo";
+        desc = a.nb.length ? "" : "No se detectaron enlaces para este átomo (puede ser un ion o estar lejos del resto).";
+      }
+      const bonds = a.nb.map(n => {
+        const d = a.p.distanceTo(atoms[n.j].p);
+        const fileBonds = !isLys && state.file.frames[state.file.frame].fileBonds;
+        const kind = !(isLys || fileBonds) ? "" : n.o === 3 ? "triple" : n.o === 2 ? "doble" : n.o === 1.5 ? (isLys ? "parcial doble" : "aromático") : "simple";
+        return '<li><span>' + esc(atomName(a.i)) + ' – <button data-go="' + n.j + '">' + esc(atomName(n.j)) + '</button>' +
+          (kind ? ' <span style="color:var(--muted)">' + kind + '</span>' : '') + '</span><span>' + fmt(d) + ' Å</span></li>';
+      }).join("");
+      const mine = hbonds.filter(hb => hb.h === a.i || hb.a === a.i);
+      const hbRows = mine.map(hb => {
+        const other = hb.h === a.i ? hb.a : hb.h;
+        return '<li><span>' + esc(atomName(a.i)) + ' ··· <button data-go="' + other + '">' + esc(atomName(other)) + '</button> <span style="color:var(--hbond)">' +
+          (hb.shared ? "protón compartido" : "puente de H") + '</span></span><span>' + fmt(a.p.distanceTo(atoms[other].p)) + ' Å</span></li>';
+      }).join("");
+      const sharedHere = mine.find(hb => hb.shared && hb.h === a.i);
+      if (sharedHere) {
+        const dD = a.p.distanceTo(atoms[sharedHere.d].p), dA = a.p.distanceTo(atoms[sharedHere.a].p);
+        desc = (desc ? desc + " " : "") + "Este hidrógeno está casi a la mitad entre " + esc(atomName(sharedHere.d)) + " (" + fmt(dD) + " Å) y " + esc(atomName(sharedHere.a)) +
+          " (" + fmt(dA) + " Å): es un protón compartido, en plena transferencia o en un puente de hidrógeno muy fuerte. Se dibuja unido al átomo más cercano y con línea punteada al otro.";
+      }
+      const charge = (a.q ? '<p><b>Carga formal:</b> ' + (a.q > 0 ? "+" : "−") + Math.abs(a.q) + '</p>' : "") +
+        (a.pq !== undefined ? '<p><b>Carga parcial:</b> ' + (a.pq < 0 ? "−" : "+") + fmt(Math.abs(a.pq), 3) + '</p>' : "");
+      // coordinates: the mirror copy uses its partner's file coordinates when the file has it
+      let coords = "";
+      if (!isLys) {
+        let c = a.orig, note = "";
+        if (onMirror) {
+          const f = state.file, pr = f.pairs.find(q => q.a === f.frame || q.b === f.frame);
+          if (pr) { const partner = f.frames[pr.a === f.frame ? pr.b : pr.a]; const pa = partner.atoms[a.i]; c = [pa.x, pa.y, pa.z]; note = " (de " + partner.label + ")"; }
+          else { c = null; }
+        }
+        coords = c ? '<p class="coords">x ' + fmt(c[0]) + ' · y ' + fmt(c[1]) + ' · z ' + fmt(c[2]) + ' Å' + esc(note) + '</p>'
+                   : '<p class="coords">Coordenadas: las del original reflejadas en el espejo</p>';
+      }
+      // bond angles around this atom
+      const nbs = a.nb.map(n => n.j);
+      const angRows = [];
+      for (let x = 0; x < nbs.length && angRows.length < 8; x++) for (let y = x + 1; y < nbs.length && angRows.length < 8; y++)
+        angRows.push('<li><span>' + esc(atomName(nbs[x])) + '–' + esc(atomName(a.i)) + '–' + esc(atomName(nbs[y])) + '</span><span>' + angleAt(atoms[nbs[x]].p, a.p, atoms[nbs[y]].p).toFixed(1) + '°</span></li>');
+      const angles = angRows.length ? '<p class="sub-h">Ángulos de enlace</p><ul class="bonds">' + angRows.join("") + '</ul>' : "";
+      const mirrorNote = state.mirror
+        ? '<p class="mirror-note">' + (onMirror ? "Estás viendo este átomo en la copia del espejo. " : "") +
+          "En la imagen especular este átomo tiene <b>los mismos enlaces, longitudes y ángulos</b>. Lo que cambia es el sentido: las posiciones se reflejan y los <b>ángulos diedros cambian de signo</b>; por eso el Cα pasa de " +
+          (side && side.c ? side.c + " a " + side.mc : "una configuración a la otra") + ". Pruébalo con «Medir» eligiendo 4 átomos en cada copia.</p>"
+        : "";
+      const actions = '<div class="actions"><button class="btn" type="button" data-act="center">Centrar aquí</button>' +
+        '<button class="btn" type="button" data-act="measure">' + (state.measure ? "Medir de nuevo desde aquí" : "Medir desde aquí") + '</button></div>';
+      setHTML(det,
+        '<div class="atom-head"><div class="chip" style="background:' + colorCss(a.el) + ';color:' + textOn(a.el) + '">' + esc(a.el) + '</div>' +
+        '<div><b>' + esc(atomName(a.i)) + (side ? '<span class="side-badge ' + (onMirror ? (side.mc || "M") : (side.c || "M")) + '">' + (onMirror ? (side.mc ? "copia " + side.mc : "espejo") : (side.c ? "copia " + side.c : "original")) + '</span>' : '') + '</b><span>' + esc(sublabel) + '</span></div></div>' +
+        (desc ? '<p>' + desc + '</p>' : '') + charge + coords +
+        '<p class="sub-h">Enlaces</p><ul class="bonds">' + bonds + hbRows + '</ul>' + angles + mirrorNote + actions);
+    }
+
+    // measurement block
+    const mb = $("measure");
+    mb.hidden = !state.measure;
+    if (state.measure) {
+      const P = state.measure.picks, rows = measureValues();
+      const hint = P.length === 1 ? "Haz clic en otro átomo para medir la distancia."
+        : P.length === 2 ? "Un tercer átomo da el ángulo."
+        : P.length === 3 ? "Un cuarto átomo da el ángulo diedro (torsión)."
+        : "Medición completa. Un clic más empieza una nueva. Si cambias de estructura, los valores se actualizan.";
+      const sideTxt = state.mirror ? (P[0].mirror ? " · en la copia del espejo" : " · en la copia original") : "";
+      setHTML(mb, '<div class="m-head"><b>Medición</b><button class="btn" type="button" data-act="end-measure">Terminar</button></div>' +
+        '<p class="m-path">' + P.map(pk => esc(atomName(pk.i))).join(" → ") + esc(sideTxt) + '</p>' +
+        (rows.length ? '<ul>' + rows.map(r => '<li><span>' + esc(r[0]) + '</span><span>' + r[1] + '</span></li>').join("") + '</ul>' : "") +
+        '<p class="note">' + hint + '</p>');
+    }
+
+    // groups (lysine only)
+    const gEl = $("groups");
+    gEl.innerHTML = "";
+    if (isLys) GROUPS.forEach(g => {
+      const b = document.createElement("button");
+      b.className = "grp"; b.type = "button";
+      b.setAttribute("aria-pressed", String(state.group === g.id));
+      b.innerHTML = '<span class="dot" style="background:' + g.color + '"></span><span>' + g.label + '</span><span class="tag">' + (state.form === "physio" ? g.tagP : g.tag) + '</span>';
+      b.addEventListener("click", () => { state.group = state.group === g.id ? null : g.id; applyVisibility(); renderPanel(); });
+      gEl.appendChild(b);
+    });
+
+    // facts
+    const counts = {};
+    atoms.forEach(a => counts[a.el] = (counts[a.el] || 0) + 1);
+    const order = hillOrder(counts);
+    const mass = atoms.reduce((s, a) => s + props(a.el).mass, 0);
+    const net = atoms.reduce((s, a) => s + a.q, 0);
+    const formula = order.map(e => e + (counts[e] > 1 ? sub(counts[e]) : "")).join("") + chargeSup(net);
+    $("formula").textContent = formula;
+
+    let rows;
+    if (isLys) {
+      $("title").textContent = "L-Lisina";
+      $("subtitle").textContent = "Ácido (S)-2,6-diaminohexanoico · Lys · K";
+      $("formName").textContent = state.form === "physio" ? "catión a pH 7.4" : "forma neutra";
+      $("srcName").textContent = "L-Lisina";
+      $("srcName").title = "L-Lisina (modelo incluido)";
+      setStats([["", "modelo incluido"], [atoms.length, "átomos"], ["", state.form === "physio" ? "catión, carga +1" : "neutra"]]);
+      $("fmtBadge").textContent = "INCLUIDA";
+      rows = [
+        ["Fórmula", formula], ["Masa molar", fmt(mass, 2) + " g/mol"], ["Átomos", String(atoms.length)],
+        ["Enlaces", String(bondList.length)], ["Carga neta", net === 0 ? "0" : "+" + net],
+        ["pKa α-COOH", "2.18"], ["pKa α-NH₃⁺", "8.95"], ["pKa ε-NH₃⁺", "10.53"], ["Punto isoeléctrico", "9.74"]
+      ];
+    } else {
+      const f = state.file, nF = f.frames.length, fr = f.frames[f.frame];
+      $("title").textContent = nF > 1 ? fr.label.replace(/\.(out|log|xyz)$/i, "") : f.name.replace(/\.[^.]+$/, "");
+      $("subtitle").textContent = (f.nFiles > 1 ? f.nFiles + " archivos" : f.name) + " · " + atoms.length + " átomos" + (fr.chir ? " · " + fr.chir + "-aminoácido" : "");
+      let en = null;
+      if (f.hasE) { const tb = energyTable(); en = { d: tb.dE[f.frame], p: tb.pop[f.frame] }; }
+      $("formName").textContent = en ? "ΔE " + fmtE(en.d) + " kcal/mol" : (nF > 1 ? "estructura " + (f.frame + 1) + " de " + nF : "archivo ." + (f.name.split(".").pop() || "xyz").toLowerCase());
+      $("srcName").textContent = f.name;
+      $("srcName").title = f.fileNames ? f.fileNames.join(", ") : f.name;
+      setStats([
+        nF > 1 ? [nF, f.isTraj ? "pasos" : "estructuras"] : ["", "1 estructura"],
+        [atoms.length, "átomos"],
+        ["", f.isTraj ? "trayectoria" : nF > 1 ? (f.hasE ? "confórmeros con energía" : "sin energías") : ({ XYZ: "solo posiciones", MOL: "con enlaces", SDF: "con enlaces", MOL2: "con enlaces" }[f.fmtLabel] || "")],
+        f.hasE ? ["", "energía en " + ({ ha: "Hartree", kcal: "kcal/mol", kj: "kJ/mol", ev: "eV" })[f.unit]] : null
+      ].filter(x => x && (x[0] !== "" || x[1])));
+      $("fmtBadge").textContent = f.fmtLabel || "ARCHIVO";
+      $("frameSub").textContent = en ? "ΔE " + fmtE(en.d) + " kcal/mol" + (f.isTraj ? "" : " · " + fmt(en.p * 100, 1) + " % de población") : (fr.src && f.nFiles > 1 ? fr.src : "");
+      const unknown = Object.keys(counts).filter(e => !PT[e]);
+      rows = [
+        ["Fórmula", formula], ["Masa molar", fmt(mass, 2) + " g/mol" + (unknown.length ? "*" : "")],
+        ["Átomos", String(atoms.length)], [fr.fileBonds ? "Enlaces (del archivo)" : "Enlaces detectados", String(bondList.length)],
+        ["Tamaño", fmt(molRadius * 2, 1) + " Å"]
+      ];
+      if (fr.chir) rows.push(["Configuración del Cα", fr.chir === "L" ? "L (enantiómero natural)" : "D"]);
+      if (en) {
+        rows.push(["ΔE", fmtE(en.d) + " kcal/mol"]);
+        if (!f.isTraj) rows.push(["Población (" + fmt(f.T, 0) + " K)", fmt(en.p * 100, 1) + " %"]);
+        else rows.push(["Energía", f.frames[f.frame].energy + " " + ({ ha: "Ha", kcal: "kcal/mol", kj: "kJ/mol", ev: "eV" })[f.unit]]);
+      }
+      if (nF > 1) rows.push(["Estructuras", String(nF)]);
+      if (unknown.length) rows.push(["Sin datos", unknown.join(", ")]);
+      if (net !== 0) rows.push(["Carga neta", (net > 0 ? "+" : "−") + Math.abs(net)]);
+      if (hbonds.length) rows.push(["Puentes de H", String(hbonds.length)]);
+      const sh = hbonds.find(hb => hb.shared);
+      if (sh) rows.push(["Protón compartido", atomName(sh.d) + " ··· " + atomName(sh.h) + " ··· " + atomName(sh.a)]);
+      if (fr.fields) Object.keys(fr.fields).slice(0, 8).forEach(k => {
+        const val = fr.fields[k]; rows.push([k, val.length > 40 ? val.slice(0, 40) + "…" : val]);
+      });
+    }
+    $("facts").innerHTML = rows.map(r => "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>").join("");
+    const cm = $("comment");
+    cm.hidden = !fileComment;
+    cm.textContent = fileComment ? "Comentario: " + fileComment : "";
+
+    $("legend").innerHTML = order.map(e =>
+      '<span><i style="background:' + colorCss(e) + '"></i>' + esc(props(e).name === "Desconocido" ? e : props(e).name) + ' <em>×' + counts[e] + '</em></span>').join("");
+
+    $("note").textContent = isLys
+      ? "Arrastra para girar · rueda o pellizco para acercar · clic derecho (o dos dedos) para desplazar · clic en un átomo para ver sus enlaces. Geometría 3D optimizada con el campo de fuerza MMFF94; distancias en ångströms (Å)."
+      : fileNote();
+  }
+
+  // ---------- energies ----------
+  const UNIT = { kcal: 1, kj: 1 / 4.184, ha: 627.509474, ev: 23.060548 };
+  const fmtE = d => d < 10 ? d.toFixed(4) : d.toFixed(2);
+  function guessUnit(frames) {
+    const E = frames.map(f => f.energy);
+    const lo = Math.min(...E), hi = Math.max(...E);
+    return (hi < -1 && hi - lo < 2) ? "ha" : "kcal";
+  }
+  function energyTable() {
+    const f = state.file, fac = UNIT[f.unit];
+    const E = f.frames.map(fr => fr.energy * fac);
+    let min = Infinity; E.forEach(e => { if (e < min) min = e; });
+    const dE = E.map(e => e - min);
+    const RT = 0.0019872043 * f.T;
+    const w = dE.map(d => Math.exp(-d / RT));
+    const Z = w.reduce((s, x) => s + x, 0);
+    return { dE, pop: w.map(x => x / Z) };
+  }
+  const badge = c => c ? '<span class="badge ' + c + '" title="' + (c === "L" ? "L-aminoácido" : "D-aminoácido (imagen especular del natural)") + '">' + c + '</span>' : "";
+  function renderEnergy() {
+    const f = state.file, sec = $("secEnergy");
+    sec.hidden = !(state.source === "file" && f && f.hasE);
+    if (sec.hidden) { $("eChart").hidden = true; $("frameSlider").hidden = false; return; }
+    $("enUnit").value = f.unit;
+    const { dE, pop } = energyTable();
+    const order = dE.map((_, k) => k).sort((a, b) => dE[a] - dE[b]);
+    const maxD = dE[order[order.length - 1]] || 1;
+    const minK = order[0];
+    setHTML($("enMin"), '<span>Mínimo: <b>' + esc(f.frames[minK].label) + '</b> ' + badge(f.frames[minK].chir) + '</span>' +
+      (f.frame !== minK ? '<button class="btn" type="button" data-k="' + minK + '">Ir al mínimo</button>' : '<span class="badge min">mostrando el mínimo</span>'));
+    drawEnergyChart(dE, minK);
+    $("enTWrap").hidden = !!f.isTraj;
+    const maxK = order[order.length - 1];
+    // which structures the list shows
+    const n = dE.length;
+    const lopt = $("listMode").querySelectorAll('option[value="lmin"], option[value="lmax"]');
+    lopt.forEach(o => { o.hidden = !f.isTraj; o.disabled = !f.isTraj; });
+    if (!f.isTraj && (f.listMode === "lmin" || f.listMode === "lmax")) f.listMode = "low";
+    const mode = f.listMode || "low";
+    const count = f.listCount !== undefined ? f.listCount : (f.isTraj ? 50 : 0);
+    const sortBy = f.listSort || (mode === "high" || mode === "lmax" ? "desc" : "asc");
+    $("listMode").value = mode; $("listCount").value = String(count); $("listSort").value = sortBy;
+    const w = Math.min(50, Math.max(2, Math.round(n / 100)));
+    let pool;
+    if (mode === "low") pool = order;
+    else if (mode === "high") pool = order.slice().reverse();
+    else if (mode === "all") pool = dE.map((_, k) => k);
+    else {
+      pool = localExtrema(dE, mode === "lmin" ? -1 : 1, w);
+      pool.sort((a, b) => mode === "lmin" ? dE[a] - dE[b] : dE[b] - dE[a]);
+    }
+    let picked = count ? pool.slice(0, count) : pool.slice();
+    if (sortBy === "asc") picked.sort((a, b) => dE[a] - dE[b]);
+    else if (sortBy === "desc") picked.sort((a, b) => dE[b] - dE[a]);
+    else picked.sort((a, b) => a - b);
+    const LIMIT = 500, shown = picked.slice(0, LIMIT);
+    const what = { low: "de menor energía", high: "de mayor energía", lmin: "mínimos locales", lmax: "máximos locales", all: "estructuras" }[mode];
+    $("listSum").textContent = (mode === "lmin" || mode === "lmax"
+      ? pool.length.toLocaleString("es-MX") + " " + what + " (cada uno comparado con ±" + w + " pasos vecinos) · se muestran " + picked.length.toLocaleString("es-MX")
+      : "Se muestran " + picked.length.toLocaleString("es-MX") + " de " + n.toLocaleString("es-MX") + (mode === "all" ? "" : " · " + what)) +
+      (n >= 8 && picked.length <= 600 ? " · marcadas en la gráfica" : "");
+    drawMarks(picked, dE);
+    const listEl = $("confList");
+    const listKey = [f.uid, f.unit, f.T, mode, count, sortBy, shown.length, shown[0], shown[shown.length - 1]].join("|");
+    if (listEl._key === listKey) {
+      listEl.querySelectorAll("[data-k]").forEach(b => b.setAttribute("aria-current", String(+b.dataset.k === f.frame)));
+    } else {
+    listEl._key = listKey;
+    listEl.innerHTML = shown.map((k, r) => {
+      const fr = f.frames[k];
+      return '<li><button type="button" data-k="' + k + '" aria-current="' + (k === f.frame) + '" title="' + esc(fr.label) + '">' +
+        '<span class="rk">' + (r + 1) + '</span><span class="nm">' + esc(fr.label) + '</span><span class="bdg">' + badge(fr.chir) + (k === minK ? '<span class="badge min">mín</span>' : '') + (k === maxK && n > 2 ? '<span class="badge max">máx</span>' : '') + '</span>' +
+        '<span class="row2"><span class="track"><span class="fill" style="display:block;width:' + (dE[k] / maxD * 100).toFixed(1) + '%"></span></span>' +
+        '<span class="num"><b>' + fmtE(dE[k]) + '</b> kcal/mol</span>' + (f.isTraj ? '' : '<span class="num">' + fmt(pop[k] * 100, 1) + ' %</span>') + '</span></button></li>';
+    }).join("") + (picked.length > shown.length ? '<li class="note">… y ' + (picked.length - shown.length).toLocaleString("es-MX") + ' más (usa la gráfica o el deslizador).</li>' : "");
+    }
+    setHTML($("pairs"), f.pairs.slice(0, 20).map(pr => {
+      const A = f.frames[pr.a], B = f.frames[pr.b];
+      return '<li><b>' + esc(A.label) + '</b> y <b>' + esc(B.label) + '</b> son imágenes especulares (enantiómeros): coinciden al reflejar una (RMSD ' + fmt(pr.mirror) + ' Å). Su diferencia de energía, ' + fmtE(Math.abs(dE[pr.a] - dE[pr.b])) + ' kcal/mol, es ruido numérico.' +
+        '<br><button class="btn" type="button" data-pair="' + (A.chir === "L" ? pr.a : B.chir === "L" ? pr.b : pr.a) + '">Ver los dos lado a lado</button></li>';
+    }).join(""));
+    $("cmpSel").value = state.cmp === null ? "" : String(state.cmp);
+    const out = $("cmpOut");
+    if (!cmpInfo) out.textContent = state.cmp !== null && state.cmp === f.frame ? "Es la misma estructura que se muestra." : "La estructura superpuesta se dibuja en morado, alineada sobre la que estás viendo.";
+    else if (cmpInfo.error) out.textContent = cmpInfo.error;
+    else out.textContent = "RMSD frente a la estructura mostrada: " + fmt(cmpInfo.rmsd) + " Å (todos los átomos, tras alinear)." +
+      (cmpInfo.mirror < .05 ? " Reflejada en un espejo coincide exactamente (" + fmt(cmpInfo.mirror) + " Å): es su enantiómero." : "");
+    $("enNote").textContent = f.isTraj
+      ? "Trayectoria: ΔE en kcal/mol respecto al paso de menor energía. Los mínimos y máximos locales son los pasos más bajos o más altos que todos sus vecinos cercanos: los valles y las crestas de la gráfica. Haz clic o arrastra sobre la gráfica para ir a cualquier paso. En una trayectoria no se calculan poblaciones de Boltzmann, porque cada paso es una foto de la misma simulación y no un confórmero independiente."
+      : "ΔE en kcal/mol respecto a la estructura más estable. Las poblaciones de Boltzmann suponen que todas las estructuras listadas coexisten en equilibrio a " + fmt(f.T, 2) + " K.";
+  }
+  function localExtrema(dE, sign, w) {
+    const n = dE.length, out = [];
+    for (let k = 0; k < n; k++) {
+      let ok = true, strict = false;
+      for (let j = Math.max(0, k - w); j <= Math.min(n - 1, k + w); j++) {
+        if (j === k) continue;
+        if (sign < 0 ? dE[j] < dE[k] : dE[j] > dE[k]) { ok = false; break; }
+        if (dE[j] !== dE[k]) strict = true;
+      }
+      if (ok && strict) out.push(k);
+    }
+    return out;
+  }
+  function drawMarks(ks, dE) {
+    const n = dE.length;
+    if (n < 8 || ks.length > 600) { $("eMarks").setAttribute("d", ""); return; }
+    const X = k => k / (n - 1) * 1000, Y = d => 196 - d / chartMax * 188;
+    $("eMarks").setAttribute("d", ks.map(k => "M" + X(k).toFixed(1) + "," + (Y(dE[k]) - 9).toFixed(1) + "V" + (Y(dE[k]) + 9).toFixed(1)).join(""));
+  }
+  $("listMode").addEventListener("change", e => { if (!state.file) return; state.file.listMode = e.target.value; state.file.listSort = undefined; renderEnergy(); });
+  $("listCount").addEventListener("change", e => { if (!state.file) return; state.file.listCount = +e.target.value; renderEnergy(); });
+  $("listSort").addEventListener("change", e => { if (!state.file) return; state.file.listSort = e.target.value; renderEnergy(); });
+
+  // Energy along the structures (min–max per pixel column so spikes survive down-sampling)
+  let chartKey = "", chartMax = 1;
+  function drawEnergyChart(dE, minK) {
+    const f = state.file, n = dE.length, box = $("eChart");
+    box.hidden = n < 8;
+    $("frameSlider").hidden = !box.hidden;
+    if (box.hidden) return;
+    box.setAttribute("aria-valuemax", String(n)); box.setAttribute("aria-valuenow", String(f.frame + 1));
+    box.setAttribute("aria-valuetext", f.frames[f.frame].label + ", ΔE " + fmtE(dE[f.frame]) + " kcal/mol");
+    let max = 0; dE.forEach(d => { if (d > max) max = d; });
+    chartMax = max || 1;
+    const key = f.uid + "|" + f.unit + "|" + n;
+    const X = k => n === 1 ? 500 : k / (n - 1) * 1000, Y = d => 196 - d / chartMax * 188;
+    if (key !== chartKey) {
+      chartKey = key;
+      const cols = Math.min(n, 500), pts = [];
+      for (let c = 0; c < cols; c++) {
+        const a = Math.floor(c * n / cols), b = Math.max(a + 1, Math.floor((c + 1) * n / cols));
+        let lo = a, hi = a;
+        for (let k = a; k < b; k++) { if (dE[k] < dE[lo]) lo = k; if (dE[k] > dE[hi]) hi = k; }
+        (lo < hi ? [lo, hi] : [hi, lo]).forEach(k => pts.push(X(k).toFixed(1) + "," + Y(dE[k]).toFixed(1)));
+      }
+      $("eLine").setAttribute("d", "M" + pts.join("L"));
+      $("eArea").setAttribute("d", "M0,200L" + pts.join("L") + "L1000,200Z");
+      $("eChartTop").textContent = chartMax < 10 ? chartMax.toFixed(2) : chartMax.toFixed(0);
+      $("eChartN").textContent = String(n);
+      $("eChartX").textContent = f.isTraj ? "paso" : "estructura";
+    }
+    const x = X(f.frame);
+    $("eCur").setAttribute("x1", x); $("eCur").setAttribute("x2", x);
+    const H = $("eSvg").getBoundingClientRect().height || 84;
+    const place = (el, k) => { el.style.left = (X(k) / 10) + "%"; el.style.top = (Y(dE[k]) / 200 * H) + "px"; };
+    place($("eCurDot"), f.frame); place($("eMinDot"), minK);
+  }
+  let chartDrag = false;
+  const chartPick = e => {
+    const r = $("eSvg").getBoundingClientRect(), n = state.file.frames.length;
+    const k = Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * (n - 1));
+    if (k !== state.file.frame) showFrame(k);
+  };
+  $("eSvg").addEventListener("pointerdown", e => { if (!state.file) return; stopPlay(); chartDrag = true; $("eSvg").setPointerCapture(e.pointerId); chartPick(e); });
+  $("eSvg").addEventListener("pointermove", e => { if (chartDrag) chartPick(e); });
+  $("eSvg").addEventListener("pointerup", () => { chartDrag = false; });
+  $("eSvg").addEventListener("pointercancel", () => { chartDrag = false; });
+  $("eChart").addEventListener("keydown", e => {
+    if (!state.file) return;
+    const n = state.file.frames.length, k = state.file.frame, big = Math.max(1, Math.round(n / 20));
+    const to = { ArrowRight: k + 1, ArrowUp: k + 1, ArrowLeft: k - 1, ArrowDown: k - 1, PageUp: k + big, PageDown: k - big, Home: 0, End: n - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault(); e.stopPropagation(); stopPlay();
+    showFrame(Math.min(n - 1, Math.max(0, to)));
+  });
+
+  $("detail").addEventListener("click", e => {
+    const go = e.target.closest("[data-go]");
+    if (go) { select(+go.dataset.go, state.selMirror); return; }
+    const act = e.target.closest("[data-act]");
+    if (!act || state.sel === null) return;
+    if (act.dataset.act === "center") centerOn(state.sel, state.selMirror);
+    else if (act.dataset.act === "measure") startMeasure(state.sel, state.selMirror);
+  });
+  $("measure").addEventListener("click", e => { if (e.target.closest('[data-act="end-measure"]')) endMeasure(); });
+
+  function onPick(e) { const b = e.target.closest("[data-k]"); if (b) { stopPlay(); animateTo(+b.dataset.k); } }
+  $("confList").addEventListener("click", onPick);
+  $("pairs").addEventListener("click", e => {
+    const b = e.target.closest("[data-pair]"); if (!b) return;
+    stopPlay();
+    state.mirror = true; $("t-mirror").setAttribute("aria-pressed", "true");
+    state.file.frame = +b.dataset.pair; setFrameUI(state.file.frame);
+    build(); computeRadius(); fit(true);
+  });
+  $("enMin").addEventListener("click", onPick);
+  $("enUnit").addEventListener("change", e => { if (state.file) { state.file.unit = e.target.value; renderPanel(); } });
+  $("enT").addEventListener("change", e => {
+    const v = parseFloat(e.target.value);
+    if (state.file && isFinite(v) && v > 0) { state.file.T = v; renderPanel(); } else e.target.value = state.file ? state.file.T : 298.15;
+  });
+  $("cmpSel").addEventListener("change", e => { state.cmp = e.target.value === "" ? null : +e.target.value; build(); });
+
+  function fileNote() {
+    const fr = state.file.frames[state.file.frame];
+    const parts = [];
+    if (fr.fileBonds) parts.push("Los enlaces, su orden (simple, doble, triple o aromático) y las cargas vienen del propio archivo.");
+    else parts.push("Los archivos .xyz solo traen posiciones, así que los enlaces se deducen por distancia: dos átomos se unen si están a menos que la suma de sus radios covalentes + 0.4 Å. Todos se dibujan como enlaces simples.");
+    const sh = hbonds.find(hb => hb.shared);
+    if (sh) parts.push("En esta estructura " + atomName(sh.h) + " está casi a la mitad entre " + atomName(sh.d) + " y " + atomName(sh.a) +
+      " (protón compartido). Un hidrógeno solo forma un enlace covalente, así que se une al átomo más cercano y el otro contacto se dibuja punteado.");
+    if (fr.flat) parts.push("Atención: esta estructura tiene coordenadas 2D (todas las z = 0), así que se ve plana.");
+    if (fr.fileBonds && !fr.atoms.some(a => a.el === "H") && fr.atoms.some(a => a.el === "C")) parts.push("El archivo no incluye hidrógenos explícitos; solo se dibujan los átomos que trae.");
+    parts.push("Coordenadas en ångströms (Å).");
+    return parts.join(" ");
+  }
+
+  function setStats(items) {
+    $("srcStats").innerHTML = items.map(([v, l]) => '<span>' + (v !== "" ? '<b>' + esc(Number(v).toLocaleString("es-MX")) + '</b> ' : '') + esc(l) + '</span>').join("");
+  }
+  function setLoading(msg) { $("loadStatus").hidden = !msg; $("loadText").textContent = msg || ""; }
+  $("errClose").addEventListener("click", () => showError(""));
+  $("openSmall").addEventListener("click", () => $("xyzInput").click());
+
+  // ---------- file loading ----------
+  const errEl = $("xyzErr");
+  function showError(msg) { errEl.textContent = msg; $("xyzErrBox").hidden = !msg; }
+  async function loadFiles(list) {
+    const files = Array.from(list || []);
+    if (!files.length) return;
+    const total = files.reduce((s, f) => s + f.size, 0);
+    if (total > 30 * 1024 * 1024) { showError("Los archivos suman más de 30 MB; carga menos a la vez."); return; }
+    let frames = [];
+    const tick = () => new Promise(r => setTimeout(r, 20));
+    for (const file of files) {
+      let text, fr;
+      setLoading("Leyendo " + file.name + "…"); await tick();
+      try { text = await file.text(); } catch (e) { setLoading(""); showError("No se pudo abrir «" + file.name + "»."); return; }
+      try { fr = parseAny(file.name, text); } catch (e) { setLoading(""); showError("No se pudo leer «" + file.name + "». " + e.message); return; }
+      fr.forEach((f, k) => { f.src = file.name; f.nInSrc = fr.length; f.idxInSrc = k; });
+      frames = frames.concat(fr);
+    }
+    setLoading("Preparando " + frames.length.toLocaleString("es-MX") + (frames.length === 1 ? " estructura…" : " estructuras…")); await tick();
+    let prep;
+    try { prep = prepareFrames(frames); } catch (e) { setLoading(""); showError("No se pudo preparar el archivo: " + e.message); return; }
+    setLoading("");
+    const exts = [...new Set(files.map(f => (f.name.match(/\.([^.]+)$/) || [, "?"])[1].toUpperCase()))];
+    const fileObj = {
+      uid: ++fileSeq,
+      name: files.length === 1 ? files[0].name : files.length + " archivos", nFiles: files.length, fileNames: files.map(f => f.name), fmtLabel: exts.length === 1 ? exts[0] : "VARIOS",
+      frames, frame: prep.hasE && !prep.isTraj ? prep.refK : 0, hasE: prep.hasE, pairs: prep.pairs, isTraj: prep.isTraj,
+      unit: prep.hasE ? (frames[0].unitHint || guessUnit(frames)) : "kcal", T: 298.15
+    };
+    const dup = recent.findIndex(r => r.name === fileObj.name);
+    if (dup >= 0) recent.splice(dup, 1);
+    recent.unshift(fileObj);
+    if (recent.length > 6) recent.pop();
+    activateFile(fileObj, true);
+  }
+  const recent = [];
+  let fileSeq = 0;
+  function activateFile(fileObj, fresh) {
+    state.measure = null; canvas.classList.remove("measuring"); $("mHint").hidden = true;
+    const frames = fileObj.frames;
+    showError("");
+    stopPlay();
+    anim = null;
+    state.source = "file";
+    state.file = fileObj;
+    state.sel = null; state.group = null; state.cmp = null;
+    $("enT").value = String(fileObj.T);
+    const heavy = frames[0].atoms.filter(a => a.el !== "H").length;
+    state.labels = heavy <= 40;
+    $("t-lbl").setAttribute("aria-pressed", String(state.labels));
+    // comparison choices, ordered by energy when there are energies
+    const idx = frames.map((_, k) => k);
+    if (fileObj.hasE) idx.sort((a, b) => frames[a].energy - frames[b].energy);
+    $("cmpSel").innerHTML = '<option value="">Ninguna</option>' + idx.slice(0, 500).map(k => '<option value="' + k + '">' + esc(frames[k].label) + '</option>').join("");
+    $("frames").hidden = frames.length < 2;
+    $("orderWrap").hidden = !fileObj.hasE;
+    $("playOrder").value = fileObj.hasE && !fileObj.isTraj ? "energy" : "file";
+    if (fresh) { if (frames.length > 60) setTiming(0.08, 0); else setTiming(timing.dur > .1 ? timing.dur : 1, timing.dur > .1 ? timing.hold : .45); }
+    $("frameSlider").max = String(frames.length - 1);
+    showFrame(fileObj.frame);
+    computeRadius(); fit(true);
+    renderRecent();
+  }
+  function renderRecent() {
+    const wrap = $("recentWrap");
+    wrap.hidden = recent.length === 0;
+    if (wrap.hidden) return;
+    const cur = state.source === "file" ? state.file : null;
+    $("recent").innerHTML =
+      '<button type="button" data-r="lys" aria-current="' + (state.source === "lysine") + '"><span>L-Lisina</span><em>incluida</em></button>' +
+      recent.map((r, i) => '<button type="button" data-r="' + i + '" aria-current="' + (r === cur) + '" title="' + esc(r.name) + '"><span>' + esc(r.name) + '</span><em>' +
+        (r.frames.length > 1 ? r.frames.length.toLocaleString("es-MX") + " est." : r.frames[0].atoms.length + " át.") + '</em></button>').join("");
+  }
+  $("recent").addEventListener("click", e => {
+    const b = e.target.closest("[data-r]"); if (!b) return;
+    if (b.dataset.r === "lys") { backToLysine(); return; }
+    const r = recent[+b.dataset.r];
+    if (r && r !== state.file) activateFile(r, false);
+  });
+  $("openXyz").addEventListener("click", () => $("xyzInput").click());
+  $("xyzInput").addEventListener("change", e => { loadFiles(e.target.files).finally(() => { e.target.value = ""; }); });
+  function backToLysine() {
+    state.measure = null; canvas.classList.remove("measuring"); $("mHint").hidden = true;
+    stopPlay(); showError("");
+    state.source = "lysine"; state.file = null; state.sel = null; state.cmp = null;
+    $("frames").hidden = true; anim = null;
+    state.labels = true; $("t-lbl").setAttribute("aria-pressed", "true");
+    build(); computeRadius(); fit(true);
+    renderRecent();
+  }
+
+  // drag & drop anywhere on the page; overlay on the stage
+  const drop = $("drop");
+  let dragDepth = 0;
+  const hasFiles = e => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes("Files");
+  window.addEventListener("dragenter", e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; drop.hidden = false; $("openXyz").classList.add("over"); });
+  window.addEventListener("dragover", e => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+  window.addEventListener("dragleave", e => { if (!hasFiles(e)) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) { drop.hidden = true; $("openXyz").classList.remove("over"); } });
+  window.addEventListener("drop", e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth = 0; drop.hidden = true; $("openXyz").classList.remove("over");
+    loadFiles(e.dataTransfer.files);
+  });
+
+  // ---------- frames, playback and morphing between structures ----------
+  // ---- timing controls: seconds per transition and pause; sliders use a log scale (0.05 s – 30 s)
+  const timing = { dur: 1, hold: .45 };
+  const LOG_MIN = Math.log(.05), LOG_MAX = Math.log(30);
+  const toRange = s => Math.round((Math.log(Math.max(.05, s)) - LOG_MIN) / (LOG_MAX - LOG_MIN) * 1000);
+  const fromRange = v => Math.exp(LOG_MIN + v / 1000 * (LOG_MAX - LOG_MIN));
+  const round2 = s => Math.round(s * 100) / 100;
+  function setTiming(dur, hold, from) {
+    if (dur !== null && isFinite(dur)) {
+      const old = timing.dur;
+      timing.dur = Math.min(30, Math.max(.05, dur));
+      // stretch an animation already running so it keeps its progress
+      if (anim) { const now = performance.now(), p = (now - anim.t0) / anim.dur; anim.dur = timing.dur * 1000; anim.t0 = now - p * anim.dur; }
+      if (from !== "num") $("durIn").value = String(round2(timing.dur));
+      if (from !== "range") $("durRange").value = String(toRange(timing.dur));
+    }
+    if (hold !== null && isFinite(hold)) {
+      timing.hold = Math.min(30, Math.max(0, hold));
+      if (from !== "num") $("holdIn").value = String(round2(timing.hold));
+      if (from !== "range") $("holdRange").value = timing.hold === 0 ? "0" : String(toRange(timing.hold));
+    }
+    const fs = s => (s < 1 ? String(round2(s)) : String(Math.round(s * 10) / 10)) + " s";
+    $("timingSum").textContent = fs(timing.dur) + " · pausa " + fs(timing.hold);
+    document.querySelectorAll(".presets [data-dur]").forEach(b =>
+      b.setAttribute("aria-pressed", String(Math.abs(+b.dataset.dur - timing.dur) < 1e-6 && Math.abs(+b.dataset.hold - timing.hold) < 1e-6)));
+  }
+  $("durIn").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v > 0) setTiming(v, null, "num"); });
+  $("durIn").addEventListener("change", () => setTiming(timing.dur, null));
+  $("holdIn").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v >= 0) setTiming(null, v, "num"); });
+  $("holdIn").addEventListener("change", () => setTiming(null, timing.hold));
+  $("durRange").addEventListener("input", e => setTiming(fromRange(+e.target.value), null, "range"));
+  $("holdRange").addEventListener("input", e => { const v = +e.target.value; setTiming(null, v === 0 ? 0 : fromRange(v), "range"); });
+  document.querySelectorAll(".presets [data-dur]").forEach(b => b.addEventListener("click", () => setTiming(+b.dataset.dur, +b.dataset.hold)));
+  let anim = null, playing = false, holdTimer = null;
+  setTiming(1, .45);
+
+  function setFrameUI(k) {
+    $("frameSlider").value = String(k);
+    $("frameLbl").textContent = (k + 1).toLocaleString("es-MX") + " / " + state.file.frames.length.toLocaleString("es-MX");
+    $("frameName").textContent = state.file.frames[k].label;
+  }
+  function showFrame(k) {
+    if (!state.file) return;
+    anim = null;
+    state.file.frame = k;
+    setFrameUI(k);
+    build();
+  }
+
+  // Pairs whose distances are kept during the morph: bonds and 1-3 pairs (bond angles)
+  function morphConstraints(bonds, n) {
+    const nb = Array.from({ length: n }, () => []);
+    bonds.forEach(b => { nb[b.a].push(b.b); nb[b.b].push(b.a); });
+    const pairs = bonds.map(b => [b.a, b.b]);
+    nb.forEach(list => { for (let x = 0; x < list.length; x++) for (let y = x + 1; y < list.length; y++) pairs.push([list[x], list[y]]); });
+    return pairs;
+  }
+  const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+  function animateTo(k) {
+    const f = state.file;
+    if (!f) return;
+    const target = f.frames[k], current = f.frames[f.frame];
+    const dur = timing.dur * 1000;
+    const canMorph = !reducedMotion && dur > 0 && k !== f.frame && sameAtoms(current.atoms, target.atoms) &&
+      atomMeshes.length === target.atoms.length && target.atoms.length <= 3000;
+    if (!canMorph) { showFrame(k); afterStep(); return; }
+    const from = atomMeshes.map(m => m.position.clone().sub(new THREE.Vector3(curShift, 0, 0)));
+    const to = target.pos.map(p => p.clone());
+    const pairs = target.atoms.length <= 600 ? morphConstraints(current.bonds, from.length) : [];
+    anim = {
+      k, from, to, t0: performance.now(), dur,
+      shiftFrom: curShift, shiftTo: state.mirror ? -mirrorXOf(target.pos, target.atoms.map(q => q.el)) : 0,
+      pairs: pairs.map(([i, j], n) => ({ i, j, bond: n < current.bonds.length, d0: from[i].distanceTo(from[j]), d1: to[i].distanceTo(to[j]) }))
+    };
+    // overlays that cannot follow the motion hide until it ends; the mirror copy and its plane stay
+    root.children.forEach(m => { if (m.userData.ghost && !m.userData.plane && !(m.userData.mirror && !m.userData.hbond)) m.visible = false; });
+    if (measureTag) measureTag.el.hidden = true;
+    // Panel and slider move to the destination right away
+    f.frame = k; setFrameUI(k);
+    refreshTags();
+    renderPanel();
+  }
+
+  function stepMorph(now) {
+    const a = anim;
+    const t = Math.min(1, (now - a.t0) / a.dur), e = ease(t);
+    const lin = a.from.map((p, i) => p.clone().lerp(a.to[i], e));
+    let X = lin.map(p => p.clone());
+    if (a.pairs.length && t < 1) {
+      // keep bond lengths and angles while the atoms travel, so groups swing round instead of cutting straight through
+      const v = new THREE.Vector3();
+      const relax = (c, k) => {
+        const pi = X[c.i], pj = X[c.j];
+        const d = c.d0 + (c.d1 - c.d0) * e;
+        v.subVectors(pj, pi);
+        const L = v.length() || 1e-6;
+        const s = (L - d) / L * .5 * k;
+        pi.addScaledVector(v, s); pj.addScaledVector(v, -s);
+      };
+      const iters = a.pairs.length > 400 ? 10 : 40;
+      for (let it = 0; it < iters; it++) {
+        a.pairs.forEach(c => relax(c, c.bond ? 1 : .6));
+        a.pairs.forEach(c => { if (c.bond) relax(c, 1); });
+      }
+      // remove the drift the corrections introduce: re-centre and re-orient onto the straight-line path
+      const cl = new THREE.Vector3(); lin.forEach(p => cl.add(p)); cl.divideScalar(lin.length);
+      const C = centered(X), Lc = lin.map(p => p.clone().sub(cl));
+      const { quat } = superpose(C, Lc);
+      X = C.map(p => p.applyQuaternion(quat).add(cl));
+    }
+    if (t >= 1) X = a.to;
+    const s = a.shiftFrom + (a.shiftTo - a.shiftFrom) * e;
+    curShift = s;
+    if (s) X = X.map(q => new THREE.Vector3(q.x + s, q.y, q.z));
+    atomMeshes.forEach((m, i) => m.position.copy(X[i]));
+    const up = new THREE.Vector3(0, 1, 0);
+    if (state.mirror && mirrorAtoms.length) {
+      // the plane sits at x = 0 after re-centring, so reflecting is just x → −x
+      mirrorAtoms.forEach(c => { const q = X[c.userData.i]; c.position.set(-q.x, q.y, q.z); });
+      mirrorBonds.forEach(c => {
+        const en = c.userData.ends;
+        const pa = X[en.a].clone().add(en.off), pb = X[en.b].clone().add(en.off);
+        pa.x = -pa.x; pb.x = -pb.x;
+        const p1 = pa.clone().lerp(pb, en.t0), p2 = pa.clone().lerp(pb, en.t1);
+        const dir = new THREE.Vector3().subVectors(p2, p1), len = dir.length();
+        c.position.copy(p1).addScaledVector(dir, .5);
+        c.scale.y = len;
+        if (len > 1e-6) c.quaternion.setFromUnitVectors(up, dir.normalize());
+      });
+    }
+    bondMeshes.forEach(m => {
+      const en = m.userData.ends; if (!en) return;
+      const pa = X[en.a].clone().add(en.off), pb = X[en.b].clone().add(en.off);
+      const p1 = pa.clone().lerp(pb, en.t0), p2 = pa.clone().lerp(pb, en.t1);
+      const dir = new THREE.Vector3().subVectors(p2, p1), len = dir.length();
+      m.position.copy(p1).addScaledVector(dir, .5);
+      m.scale.y = len;
+      if (len > 1e-6) m.quaternion.setFromUnitVectors(up, dir.normalize());
+    });
+    if (t >= 1) {
+      anim = null;
+      build();          // exact final geometry, its own bonds and the comparison overlay
+      afterStep();
+    }
+  }
+
+  function playOrder() {
+    const f = state.file, idx = f.frames.map((_, k) => k);
+    if (f.hasE && $("playOrder").value === "energy") idx.sort((a, b) => f.frames[a].energy - f.frames[b].energy);
+    return idx;
+  }
+  function nextStep() {
+    if (!playing || !state.file) return;
+    const ord = playOrder();
+    const pos = ord.indexOf(state.file.frame);
+    animateTo(ord[(pos + 1) % ord.length]);
+  }
+  function afterStep() {
+    if (!playing) return;
+    const hold = timing.hold * 1000;
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(nextStep, reducedMotion ? Math.max(hold, 900) : hold);
+  }
+  function stopPlay() {
+    playing = false;
+    clearTimeout(holdTimer);
+    $("play").setAttribute("aria-pressed", "false"); $("play").setAttribute("aria-label", "Reproducir");
+  }
+  $("frameSlider").addEventListener("input", e => { stopPlay(); showFrame(+e.target.value); });
+  $("play").addEventListener("click", () => {
+    if (playing) { stopPlay(); return; }
+    playing = true;
+    $("play").setAttribute("aria-pressed", "true"); $("play").setAttribute("aria-label", "Pausa");
+    if (!anim) nextStep();
+  });
+  function stepBy(dir) {
+    if (!state.file || state.file.frames.length < 2) return;
+    stopPlay();
+    const ord = playOrder(), n = ord.length, pos = ord.indexOf(state.file.frame);
+    animateTo(ord[(pos + dir + n) % n]);
+  }
+  $("prevBtn").addEventListener("click", () => stepBy(-1));
+  $("nextBtn").addEventListener("click", () => stepBy(1));
+  window.addEventListener("keydown", e => {
+    if (e.key === "Escape" && state.measure) { endMeasure(); return; }
+    if (state.source !== "file" || !state.file || state.file.frames.length < 2) return;
+    const tgt = e.target.closest ? e.target : null;
+    if (tgt && tgt.closest("input, select, textarea")) return;
+    if (e.key === " ") { if (tgt && tgt.closest("button, summary, a")) return; e.preventDefault(); $("play").click(); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); stepBy(1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); stepBy(-1); }
+  });
+
+  // ---------- controls ----------
+  function setPressed(sel, attr, val) {
+    document.querySelectorAll(sel).forEach(b => b.setAttribute("aria-pressed", String(b.dataset[attr] === val)));
+  }
+  document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => {
+    state.mode = b.dataset.mode; setPressed("[data-mode]", "mode", state.mode); build();
+  }));
+  document.querySelectorAll("[data-form]").forEach(b => b.addEventListener("click", () => {
+    if (state.form === b.dataset.form) return;
+    state.form = b.dataset.form; state.sel = null; state.selMirror = false;
+    if (state.measure) { state.measure = null; canvas.classList.remove("measuring"); $("mHint").hidden = true; }
+    setPressed("[data-form]", "form", state.form); build();
+  }));
+  function toggle(id, key, after) {
+    $(id).addEventListener("click", () => { state[key] = !state[key]; $(id).setAttribute("aria-pressed", String(state[key])); if (after) after(); });
+  }
+  toggle("t-h", "showH", () => { if (!state.showH && state.sel !== null && atoms[state.sel].el === "H") state.sel = null; applyVisibility(); renderPanel(); });
+  toggle("t-lbl", "labels", applyVisibility);
+  toggle("t-hb", "hb", applyVisibility);
+  toggle("t-mirror", "mirror", () => {
+    if (!state.mirror) { state.selMirror = false; if (state.measure && state.measure.picks.some(pk => pk.mirror)) state.measure = null; }
+    canvas.classList.toggle("measuring", !!state.measure); $("mHint").hidden = !state.measure;
+    build(); computeRadius(); fit(true);
+  });
+  function setSpin(v) { state.spin = v; $("t-spin").setAttribute("aria-pressed", String(v)); controls.autoRotate = v; }
+  $("t-spin").addEventListener("click", () => setSpin(!state.spin));
+  $("t-reset").addEventListener("click", () => fit(true));
+  setSpin(state.spin);
+
+  // theme changes → recolor
+  const recolor = () => applyVisibility();
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", recolor);
+  new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class", "style"] });
+
+  // ---------- loop ----------
+  const v = new THREE.Vector3(), camDir = new THREE.Vector3();
+  function placeLabels() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    // each tag sits just above the on-screen box of its copy
+    tagNodes.forEach(n => {
+      const list = n.which === "orig" ? atomMeshes : mirrorAtoms;
+      if (!list.length) return;
+      const step = Math.max(1, Math.floor(list.length / 200));
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity;
+      for (let i = 0; i < list.length; i += step) {
+        list[i].getWorldPosition(v); v.project(camera);
+        const sx = (v.x * .5 + .5) * w, sy = (-v.y * .5 + .5) * h;
+        if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy;
+      }
+      const tall = h > w;
+      n.el.classList.toggle("compact", tall);
+      if (tall) {
+        // narrow screens: a small L / D chip beside the copy, vertically centred on it
+        let y1 = -Infinity;
+        for (let i = 0; i < list.length; i += step) { list[i].getWorldPosition(v); v.project(camera); y1 = Math.max(y1, (-v.y * .5 + .5) * h); }
+        const tx = Math.max(44, x0 - 12);
+        n.el.style.transform = "translate(" + tx.toFixed(1) + "px," + ((y0 + y1) / 2).toFixed(1) + "px) translate(-100%,-50%)";
+      } else {
+        const ty = Math.max(70, y0 - 14);
+        n.el.style.transform = "translate(" + ((x0 + x1) / 2).toFixed(1) + "px," + ty.toFixed(1) + "px) translate(-50%,-100%)";
+      }
+    });
+    if (measureTag && !measureTag.el.hidden) {
+      root.localToWorld(v.copy(measureTag.local)); v.project(camera);
+      measureTag.el.style.transform = "translate(" + ((v.x * .5 + .5) * w).toFixed(1) + "px," + ((-v.y * .5 + .5) * h).toFixed(1) + "px) translate(-50%,-50%)";
+    }
+    if (!state.labels) return;
+    labelNodes.forEach(n => {
+      const m = atomMeshes[n.i];
+      m.getWorldPosition(v);
+      // nudge label toward the camera so it sits in front of the sphere
+      camDir.subVectors(camera.position, v).normalize();
+      v.addScaledVector(camDir, m.userData.r);
+      v.project(camera);
+      const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h;
+      n.el.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) translate(-50%,-50%)";
+    });
+  }
+  function frame(now) {
+    if (anim) stepMorph(now || performance.now());
+    controls.update();
+    renderer.render(scene, camera);
+    placeLabels();
+    requestAnimationFrame(frame);
+  }
+
+  build();
+  computeRadius();
+  fit(true);
+  frame();
+})();
+</script>
+
+</body>
+</html>

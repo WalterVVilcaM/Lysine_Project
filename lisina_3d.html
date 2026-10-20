@@ -51,7 +51,7 @@ body {
   font-family: var(--font-body); font-size: 14px; line-height: 1.5;
 }
 .app {
-  height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px;
+  height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) clamp(340px, 29vw, 410px); gap: 14px;
   padding-block: 14px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -143,6 +143,77 @@ aside {
   margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
 }
 /* ---- Molécula panel ---- */
+.eyebrow { font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.ds { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); }
+.ds-top { display: flex; align-items: center; gap: 10px; padding: 11px 12px; background: color-mix(in srgb, var(--accent-soft) 45%, var(--panel)); border-bottom: 1px solid var(--line); min-width: 0; }
+.ds-id { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ds-kind { font-size: 12px; color: var(--muted); }
+.ds .src-title { white-space: normal; overflow-wrap: anywhere; }
+.spec { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.spec > div { padding: 7px 12px; border-bottom: 1px solid var(--line); min-width: 0; }
+.spec > div:nth-child(odd) { border-right: 1px solid var(--line); }
+.spec > div.wide { grid-column: 1 / -1; border-right: 0; }
+.spec dt { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.spec dd { margin: 1px 0 0; font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--fg); overflow-wrap: anywhere; }
+.spec dd small { font-family: var(--font-body); font-size: 11.5px; color: var(--muted); }
+.ds .form-seg { margin: 10px 12px; }
+.ds .spec:last-child > div:nth-last-child(-n+2) { border-bottom: 0; }
+.cur { display: flex; flex-direction: column; gap: 6px; }
+.cur-head { display: flex; justify-content: space-between; align-items: baseline; }
+.cur-head output { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cur-name { font-family: var(--font-display); font-size: 17px; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.kpi { border: 1px solid var(--line); border-radius: 10px; padding: 7px 9px 8px; min-width: 0; background: var(--panel); }
+.kpi .k { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .k em { font-style: normal; font-weight: 400; }
+.kpi .v { font-family: var(--font-mono); font-size: 16px; font-weight: 500; line-height: 1.25; font-variant-numeric: tabular-nums; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .v small { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 2px; }
+.kpi .s { font-size: 11px; line-height: 1.3; color: var(--muted); overflow-wrap: anywhere; }
+.kpi.L .v { color: var(--accent); } .kpi.D .v { color: var(--mirror); }
+.kpi.hl { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent-soft) 35%, var(--panel)); }
+.an-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.seg.sm { padding: 2px; border-radius: 8px; }
+.seg.sm button { font-size: 12px; padding: 3px 8px; border-radius: 6px; font-family: var(--font-mono); }
+.chart { position: relative; outline: none; border-radius: 6px; touch-action: none; }
+.chart:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.mol .chart svg { display: block; width: 100%; height: 168px; cursor: crosshair; overflow: visible; fill: currentColor; stroke: none; stroke-width: 1; }
+.chart text { font-family: var(--font-mono); font-size: 10px; fill: var(--muted); }
+.chart .ax-title { font-family: var(--font-body); font-size: 10.5px; fill: var(--muted); }
+.chart .grid { stroke: var(--line); stroke-width: 1; shape-rendering: crispEdges; }
+.chart .axis { stroke: var(--muted); stroke-width: 1; opacity: .6; shape-rendering: crispEdges; }
+.chart .ln { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-linejoin: round; }
+.chart .ar { fill: var(--accent-soft); opacity: .75; }
+.chart .mk { stroke: var(--mirror); stroke-width: 2; stroke-linecap: round; }
+.chart .rung { stroke-width: 3; stroke-linecap: round; }
+.chart .rung.L, .chart .dot.L { stroke: var(--accent); fill: var(--accent); }
+.chart .rung.D, .chart .dot.D { stroke: var(--mirror); fill: var(--mirror); }
+.chart .rung.N, .chart .dot.N { stroke: var(--fg); fill: var(--fg); opacity: .75; }
+.chart .min-ring { fill: var(--panel); stroke: var(--accent); stroke-width: 2; }
+.chart .max-ring { fill: var(--panel); stroke: var(--danger); stroke-width: 2; }
+.chart .cur-line { stroke: var(--fg); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .cur-dot { fill: var(--fg); stroke: var(--panel); stroke-width: 2; }
+.chart .hov-line { stroke: var(--muted); stroke-width: 1; opacity: .7; }
+.chart .cur-rung { stroke: var(--fg); stroke-width: 5; stroke-linecap: round; }
+.ctip {
+  position: absolute; top: 0; left: 0; pointer-events: none; z-index: 2; min-width: 120px; max-width: 220px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  font-size: 12px; line-height: 1.35;
+}
+.ctip b { display: block; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ctip span { display: block; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ctip span.main { color: var(--fg); }
+.cstats { margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.cstats > div { padding: 5px 8px; border-right: 1px solid var(--line); min-width: 0; }
+.cstats > div:last-child { border-right: 0; }
+.cstats dt { font-size: 11px; font-weight: 600; color: var(--muted); }
+.cstats dd { margin: 0; font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cstats dd button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.cmpbox { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.diff { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--muted); }
+.diff span { border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; }
+.diff span b { font-family: var(--font-mono); font-weight: 500; color: var(--fg); }
+.diff span.mir { color: var(--mirror); border-color: color-mix(in srgb, var(--mirror) 45%, transparent); }
+.diff p { margin: 0; width: 100%; }
 .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 18px; }
 .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent); }
 .spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent-soft); border-top-color: var(--accent); animation: spin .8s linear infinite; }
@@ -169,10 +240,7 @@ aside {
 .now-txt span { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .now output { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
 .player > input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
-.player .echart { margin: 0 0 0 30px; outline: none; border-radius: 4px; }
-.player .echart svg { height: 84px; }
-.player .echart-y { left: -30px; width: 26px; height: 84px; }
-.player .echart:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+
 .transport { display: flex; justify-content: center; align-items: center; gap: 10px; }
 .mol { display: flex; flex-direction: column; gap: 10px; }
 .mol h2 { margin-bottom: 0; }
@@ -407,13 +475,14 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         <span class="status" id="loadStatus" role="status" hidden><span class="spin" aria-hidden="true"></span><span id="loadText">Leyendo…</span></span>
       </div>
 
-      <div class="src-card">
-        <div class="src-row">
+      <!-- dataset: what is loaded -->
+      <div class="ds">
+        <div class="ds-top">
           <span class="fmt" id="fmtBadge">INCLUIDA</span>
-          <b class="src-title" id="srcName">L-Lisina</b>
+          <div class="ds-id"><b class="src-title" id="srcName">L-Lisina</b><span class="ds-kind" id="dsKind">Modelo incluido</span></div>
           <button class="open-sm" id="openSmall" type="button" hidden title="Abrir otro archivo (.xyz, .mol, .sdf, .mol2)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><span>Abrir otro</span></button>
         </div>
-        <div class="stats" id="srcStats"></div>
+        <dl class="spec" id="spec"></dl>
         <div class="seg form-seg" id="secForm" role="group" aria-label="Estado de protonación">
           <button id="f-neutral" data-form="neutral" aria-pressed="true">Neutra</button>
           <button id="f-physio" data-form="physio" aria-pressed="false">pH 7.4 (ion)</button>
@@ -425,35 +494,37 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         <p id="xyzErr"></p>
         <button class="x" id="errClose" type="button" aria-label="Cerrar aviso">×</button>
       </div>
-
       <button class="dropzone" id="openXyz" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
         <span><b>Abrir tus archivos</b><small>Haz clic o suéltalos aquí · .xyz .mol .sdf .mol2 · varios a la vez</small></span>
       </button>
       <input type="file" id="xyzInput" accept=".xyz,.mol,.sdf,.sd,.mol2,.mdl,.txt,chemical/x-xyz,chemical/x-mdl-molfile,chemical/x-mdl-sdfile,chemical/x-mol2,text/plain" multiple hidden>
-
       <div class="recent" id="recentWrap" hidden>
         <span class="mini">Cambiar a otro archivo abierto</span>
         <div class="chips" id="recent"></div>
       </div>
 
-      <div class="player" id="frames" hidden>
-        <div class="now">
-          <div class="now-txt"><b id="frameName">—</b><span id="frameSub"></span></div>
-          <output id="frameLbl">1 / 1</output>
+      <!-- the structure on screen -->
+      <div class="cur" id="curBlock">
+        <div class="cur-head">
+          <span class="eyebrow">Estructura actual</span>
+          <output id="frameLbl"></output>
         </div>
-          <div class="echart" id="eChart" hidden tabindex="0" role="slider" aria-label="Estructura (gráfica de energía)" aria-valuemin="1" aria-valuemax="1" aria-valuenow="1">
-            <div class="echart-y"><span id="eChartTop">0</span><span>0</span></div>
-            <svg id="eSvg" viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true">
-              <path class="e-area" id="eArea" d=""></path>
-              <path class="e-line" id="eLine" d=""></path>
-              <path class="e-marks" id="eMarks" d=""></path>
-              <line class="e-cur" id="eCur" x1="0" x2="0" y1="0" y2="200"></line>
-            </svg>
-            <span class="e-min-dot" id="eMinDot"></span>
-            <span class="e-cur-dot" id="eCurDot"></span>
-            <div class="echart-x"><span>1</span><span id="eChartX">Estructura</span><span id="eChartN">N</span></div>
-          </div>
+        <b class="cur-name" id="frameName">—</b>
+        <div class="kpis" id="kpis"></div>
+      </div>
+
+      <!-- analysis along all structures -->
+      <div class="player" id="frames" hidden>
+        <div class="an-head">
+          <span class="eyebrow">Análisis</span>
+          <div class="seg sm" id="metricSeg" role="group" aria-label="Qué graficar"></div>
+        </div>
+        <div class="chart" id="eChart" tabindex="0" role="slider" aria-label="Estructura" aria-valuemin="1" aria-valuemax="1" aria-valuenow="1">
+          <svg id="eSvg" aria-hidden="true"><g id="cStatic"></g><g id="cDyn"></g></svg>
+          <div class="ctip" id="cTip" hidden></div>
+        </div>
+        <dl class="cstats" id="cStats"></dl>
         <input type="range" id="frameSlider" min="0" max="0" value="0" step="1" aria-label="Estructura">
         <div class="transport">
           <button class="ibtn" id="prevBtn" type="button" aria-label="Estructura anterior" title="Anterior (←)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14"/><path d="M18 6 9 12l9 6z" class="fill"/></svg></button>
@@ -489,6 +560,13 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
             <p class="note">Atajos: <kbd>espacio</kbd> reproduce o pausa, <kbd>←</kbd> <kbd>→</kbd> cambian de estructura.</p>
           </div>
         </details>
+      </div>
+
+      <!-- side-by-side comparison -->
+      <div class="cmpbox" id="cmpBox" hidden>
+        <label class="eyebrow" for="cmpSel">Comparar con otra estructura</label>
+        <select id="cmpSel"></select>
+        <div class="diff" id="cmpOut"></div>
       </div>
     </div>
 
@@ -537,11 +615,6 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       <p class="list-sum" id="listSum"></p>
       <ol class="conf" id="confList"></ol>
       <ul class="pairs" id="pairs"></ul>
-      <div class="cmp">
-        <label for="cmpSel">Superponer otra estructura para compararla</label>
-        <select id="cmpSel"></select>
-        <p class="note" id="cmpOut"></p>
-      </div>
       <p class="note" id="enNote" style="margin-top:10px"></p>
     </div>
 
@@ -556,8 +629,8 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       <div class="groups" id="groups"></div>
     </div>
 
-    <div class="sec">
-      <h2>Datos</h2>
+    <div class="sec" id="secFacts">
+      <h2>Datos adicionales</h2>
       <dl class="facts" id="facts"></dl>
       <p class="comment" id="comment" hidden></p>
     </div>
@@ -1067,6 +1140,15 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     return null;
   }
 
+  // Mass-weighted radius of gyration
+  function rgOf(els, pos) {
+    let M = 0; const c = new THREE.Vector3();
+    pos.forEach((q, i) => { const m = props(els[i]).mass || 1; M += m; c.addScaledVector(q, m); });
+    c.divideScalar(M);
+    let s = 0; pos.forEach((q, i) => { s += (props(els[i]).mass || 1) * q.distanceToSquared(c); });
+    return Math.sqrt(s / M);
+  }
+
   // Prepare loaded structures: labels, energies, common orientation, bonds, L/D, mirror pairs
   function prepareFrames(frames) {
     const toks = frames.map(f => {
@@ -1125,7 +1207,11 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         if (d > .2) pairs.push({ a: i, b: j, mirror: m, direct: d });
       }
     }
-    return { hasE, refK, pairs, isTraj };
+    // RMSD to the reference (lowest energy, else the first structure): frames are already superposed on it
+    const rmsd = frames.map(f => sameAtoms(f.atoms, ref.atoms)
+      ? Math.sqrt(f.pos.reduce((s, q, i) => s + q.distanceToSquared(ref.pos[i]), 0) / f.pos.length) : NaN);
+    const rg = frames.map(f => rgOf(f.atoms.map(a => a.el), f.pos));
+    return { hasE, refK, pairs, isTraj, rmsd, rg };
   }
 
   // ---------- molecule data ----------
@@ -1542,6 +1628,7 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     if (last && last.i === pk.i && last.mirror === pk.mirror) return;
     if (P.length >= 4 || (P.length && P[0].mirror !== pk.mirror)) m.picks = [pk];
     else P.push(pk);
+    if (P.length === 2 && state.source === "file" && state.file && state.file.frames.length > 1) state.metric = "meas";
     state.sel = pk.i; state.selMirror = pk.mirror;
     measureChanged();
   }
@@ -1728,60 +1815,65 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     const formula = order.map(e => e + (counts[e] > 1 ? sub(counts[e]) : "")).join("") + chargeSup(net);
     $("formula").textContent = formula;
 
-    let rows;
+    const netTxt = net === 0 ? "0" : (net > 0 ? "+" : "−") + Math.abs(net);
+    const sh = hbonds.find(hb => hb.shared);
+    const hbKpi = { k: "Puentes de H", v: String(hbonds.length), s: sh ? "1 protón compartido" : hbonds.length ? "intramoleculares" : "ninguno" };
+    let extra = [];
     if (isLys) {
       $("title").textContent = "L-Lisina";
       $("subtitle").textContent = "Ácido (S)-2,6-diaminohexanoico · Lys · K";
       $("formName").textContent = state.form === "physio" ? "catión a pH 7.4" : "forma neutra";
       $("srcName").textContent = "L-Lisina";
       $("srcName").title = "L-Lisina (modelo incluido)";
-      setStats([["", "modelo incluido"], [atoms.length, "átomos"], ["", state.form === "physio" ? "catión, carga +1" : "neutra"]]);
       $("fmtBadge").textContent = "INCLUIDA";
-      rows = [
-        ["Fórmula", formula], ["Masa molar", fmt(mass, 2) + " g/mol"], ["Átomos", String(atoms.length)],
-        ["Enlaces", String(bondList.length)], ["Carga neta", net === 0 ? "0" : "+" + net],
-        ["pKa α-COOH", "2.18"], ["pKa α-NH₃⁺", "8.95"], ["pKa ε-NH₃⁺", "10.53"], ["Punto isoeléctrico", "9.74"]
-      ];
+      $("dsKind").textContent = "Modelo incluido · geometría MMFF94";
+      setSpec([["Fórmula", formula], ["Masa molar", fmt(mass, 2) + " <small>g/mol</small>"], ["Átomos", String(atoms.length)],
+        ["Enlaces", bondList.length + " <small>del modelo</small>"], ["Carga neta", netTxt], ["Forma", state.form === "physio" ? "catión <small>pH 7.4</small>" : "neutra"]]);
+      $("frameName").textContent = "L-Lisina · " + (state.form === "physio" ? "catión, pH 7.4" : "neutra");
+      $("frameLbl").textContent = "";
+      setKPIs([
+        { k: "Radio de giro", v: fmt(rgOf(atoms.map(a => a.el), atoms.map(a => a.p)), 2), u: "Å", s: "por masa" },
+        hbKpi,
+        { k: "Config. Cα", v: "L", s: "(S), natural", cls: "L" }
+      ]);
+      extra = [["pKa α-COOH", "2.18"], ["pKa α-NH₃⁺", "8.95"], ["pKa ε-NH₃⁺", "10.53"], ["Punto isoeléctrico", "9.74"]];
     } else {
-      const f = state.file, nF = f.frames.length, fr = f.frames[f.frame];
+      const f = state.file, nF = f.frames.length, k = f.frame, fr = f.frames[k];
       $("title").textContent = nF > 1 ? fr.label.replace(/\.(out|log|xyz)$/i, "") : f.name.replace(/\.[^.]+$/, "");
       $("subtitle").textContent = (f.nFiles > 1 ? f.nFiles + " archivos" : f.name) + " · " + atoms.length + " átomos" + (fr.chir ? " · " + fr.chir + "-aminoácido" : "");
-      let en = null;
-      if (f.hasE) { const tb = energyTable(); en = { d: tb.dE[f.frame], p: tb.pop[f.frame] }; }
-      $("formName").textContent = en ? "ΔE " + fmtE(en.d) + " kcal/mol" : (nF > 1 ? "estructura " + (f.frame + 1) + " de " + nF : "archivo ." + (f.name.split(".").pop() || "xyz").toLowerCase());
+      const tb = f.hasE ? energyTable() : null;
+      $("formName").textContent = tb ? "ΔE " + fmtE(tb.dE[k]) + " kcal/mol" : (nF > 1 ? "estructura " + (k + 1) + " de " + nF : "archivo ." + (f.name.split(".").pop() || "xyz").toLowerCase());
       $("srcName").textContent = f.name;
       $("srcName").title = f.fileNames ? f.fileNames.join(", ") : f.name;
-      setStats([
-        nF > 1 ? [nF, f.isTraj ? "pasos" : "estructuras"] : ["", "1 estructura"],
-        [atoms.length, "átomos"],
-        ["", f.isTraj ? "trayectoria" : nF > 1 ? (f.hasE ? "confórmeros con energía" : "sin energías") : ({ XYZ: "solo posiciones", MOL: "con enlaces", SDF: "con enlaces", MOL2: "con enlaces" }[f.fmtLabel] || "")],
-        f.hasE ? ["", "energía en " + ({ ha: "Hartree", kcal: "kcal/mol", kj: "kJ/mol", ev: "eV" })[f.unit]] : null
-      ].filter(x => x && (x[0] !== "" || x[1])));
       $("fmtBadge").textContent = f.fmtLabel || "ARCHIVO";
-      $("frameSub").textContent = en ? "ΔE " + fmtE(en.d) + " kcal/mol" + (f.isTraj ? "" : " · " + fmt(en.p * 100, 1) + " % de población") : (fr.src && f.nFiles > 1 ? fr.src : "");
+      $("dsKind").textContent = (f.isTraj ? "Trayectoria · " + nF.toLocaleString("es-MX") + " pasos"
+        : nF > 1 ? nF + (f.hasE ? " confórmeros con energía" : " estructuras") : "Estructura única") + (f.nFiles > 1 ? " · " + f.nFiles + " archivos" : "");
       const unknown = Object.keys(counts).filter(e => !PT[e]);
-      rows = [
-        ["Fórmula", formula], ["Masa molar", fmt(mass, 2) + " g/mol" + (unknown.length ? "*" : "")],
-        ["Átomos", String(atoms.length)], [fr.fileBonds ? "Enlaces (del archivo)" : "Enlaces detectados", String(bondList.length)],
-        ["Tamaño", fmt(molRadius * 2, 1) + " Å"]
-      ];
-      if (fr.chir) rows.push(["Configuración del Cα", fr.chir === "L" ? "L (enantiómero natural)" : "D"]);
-      if (en) {
-        rows.push(["ΔE", fmtE(en.d) + " kcal/mol"]);
-        if (!f.isTraj) rows.push(["Población (" + fmt(f.T, 0) + " K)", fmt(en.p * 100, 1) + " %"]);
-        else rows.push(["Energía", f.frames[f.frame].energy + " " + ({ ha: "Ha", kcal: "kcal/mol", kj: "kJ/mol", ev: "eV" })[f.unit]]);
+      setSpec([["Fórmula", formula], ["Masa molar", fmt(mass, 2) + (unknown.length ? "*" : "") + " <small>g/mol</small>"], ["Átomos", String(atoms.length)],
+        ["Enlaces", bondList.length + " <small>" + (fr.fileBonds ? "del archivo" : "por distancia") + "</small>"], ["Carga neta", netTxt],
+        ["Energía", f.hasE ? UNIT_NAME[f.unit] + " <small>en el archivo</small>" : "<small>sin energías</small>"]]);
+      if (nF === 1) { $("frameName").textContent = fr.label || f.name; $("frameLbl").textContent = ""; }
+      const tiles = [];
+      if (tb) {
+        const rank = energyRank(f)[k];
+        tiles.push({ k: "ΔE", v: fmtE(tb.dE[k]), u: "kcal/mol", s: "#" + rank.toLocaleString("es-MX") + " de " + nF.toLocaleString("es-MX"), cls: rank === 1 ? "hl" : "" });
+        if (!f.isTraj) tiles.push({ k: "Población", v: fmt(tb.pop[k] * 100, 1), u: "%", s: "Boltzmann, " + fmt(f.T, 0) + " K" });
+        else tiles.push({ k: "Energía", u: UNIT_NAME[f.unit], v: fr.energy.toFixed(f.unit === "ha" ? 4 : 2), s: "valor del archivo" });
       }
-      if (nF > 1) rows.push(["Estructuras", String(nF)]);
-      if (unknown.length) rows.push(["Sin datos", unknown.join(", ")]);
-      if (net !== 0) rows.push(["Carga neta", (net > 0 ? "+" : "−") + Math.abs(net)]);
-      if (hbonds.length) rows.push(["Puentes de H", String(hbonds.length)]);
-      const sh = hbonds.find(hb => hb.shared);
-      if (sh) rows.push(["Protón compartido", atomName(sh.d) + " ··· " + atomName(sh.h) + " ··· " + atomName(sh.a)]);
-      if (fr.fields) Object.keys(fr.fields).slice(0, 8).forEach(k => {
-        const val = fr.fields[k]; rows.push([k, val.length > 40 ? val.slice(0, 40) + "…" : val]);
+      if (nF > 1 && Number.isFinite(f.rmsd[k])) tiles.push({ k: "RMSD", v: fmt(f.rmsd[k], 2), u: "Å", s: k === f.refK ? "es la referencia" : "vs " + f.frames[f.refK].label });
+      tiles.push({ k: "Radio de giro", v: fmt(f.rg[k], 2), u: "Å", s: "por masa" });
+      tiles.push(hbKpi);
+      tiles.push({ k: "Config. Cα", v: fr.chir || "—", s: fr.chir ? (fr.chir === "L" ? "natural" : "imagen especular") : "no aplica", cls: fr.chir || "" });
+      setKPIs(tiles.slice(0, 6));
+      if (unknown.length) extra.push(["Elementos sin datos", unknown.join(", ")]);
+      if (sh) extra.push(["Protón compartido", atomName(sh.d) + " ··· " + atomName(sh.h) + " ··· " + atomName(sh.a)]);
+      extra.push(["Tamaño (diámetro)", fmt(molRadius * 2, 1) + " Å"]);
+      if (fr.fields) Object.keys(fr.fields).slice(0, 8).forEach(key => {
+        const val = fr.fields[key]; extra.push([key, val.length > 40 ? val.slice(0, 40) + "…" : val]);
       });
     }
-    $("facts").innerHTML = rows.map(r => "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>").join("");
+    $("secFacts").hidden = !extra.length && !fileComment;
+    $("facts").innerHTML = extra.map(r => "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>").join("");
     const cm = $("comment");
     cm.hidden = !fileComment;
     cm.textContent = fileComment ? "Comentario: " + fileComment : "";
@@ -1792,6 +1884,8 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     $("note").textContent = isLys
       ? "Arrastra para girar · rueda o pellizco para acercar · clic derecho (o dos dedos) para desplazar · clic en un átomo para ver sus enlaces. Geometría 3D optimizada con el campo de fuerza MMFF94; distancias en ångströms (Å)."
       : fileNote();
+    renderChart();
+    renderCompare();
   }
 
   // ---------- energies ----------
@@ -1816,7 +1910,7 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   function renderEnergy() {
     const f = state.file, sec = $("secEnergy");
     sec.hidden = !(state.source === "file" && f && f.hasE);
-    if (sec.hidden) { $("eChart").hidden = true; $("frameSlider").hidden = false; return; }
+    if (sec.hidden) { chartState.marks = []; chartState.marksKey = ""; return; }
     $("enUnit").value = f.unit;
     const { dE, pop } = energyTable();
     const order = dE.map((_, k) => k).sort((a, b) => dE[a] - dE[b]);
@@ -1824,7 +1918,6 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     const minK = order[0];
     setHTML($("enMin"), '<span>Mínimo: <b>' + esc(f.frames[minK].label) + '</b> ' + badge(f.frames[minK].chir) + '</span>' +
       (f.frame !== minK ? '<button class="btn" type="button" data-k="' + minK + '">Ir al mínimo</button>' : '<span class="badge min">mostrando el mínimo</span>'));
-    drawEnergyChart(dE, minK);
     $("enTWrap").hidden = !!f.isTraj;
     const maxK = order[order.length - 1];
     // which structures the list shows
@@ -1855,7 +1948,8 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       ? pool.length.toLocaleString("es-MX") + " " + what + " (cada uno comparado con ±" + w + " pasos vecinos) · se muestran " + picked.length.toLocaleString("es-MX")
       : "Se muestran " + picked.length.toLocaleString("es-MX") + " de " + n.toLocaleString("es-MX") + (mode === "all" ? "" : " · " + what)) +
       (n >= 8 && picked.length <= 600 ? " · marcadas en la gráfica" : "");
-    drawMarks(picked, dE);
+    chartState.marks = (n >= 8 && picked.length <= 600) ? picked : [];
+    chartState.marksKey = [mode, count, sortBy, picked.length].join(",");
     const listEl = $("confList");
     const listKey = [f.uid, f.unit, f.T, mode, count, sortBy, shown.length, shown[0], shown[shown.length - 1]].join("|");
     if (listEl._key === listKey) {
@@ -1875,12 +1969,6 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       return '<li><b>' + esc(A.label) + '</b> y <b>' + esc(B.label) + '</b> son imágenes especulares (enantiómeros): coinciden al reflejar una (RMSD ' + fmt(pr.mirror) + ' Å). Su diferencia de energía, ' + fmtE(Math.abs(dE[pr.a] - dE[pr.b])) + ' kcal/mol, es ruido numérico.' +
         '<br><button class="btn" type="button" data-pair="' + (A.chir === "L" ? pr.a : B.chir === "L" ? pr.b : pr.a) + '">Ver los dos lado a lado</button></li>';
     }).join(""));
-    $("cmpSel").value = state.cmp === null ? "" : String(state.cmp);
-    const out = $("cmpOut");
-    if (!cmpInfo) out.textContent = state.cmp !== null && state.cmp === f.frame ? "Es la misma estructura que se muestra." : "La estructura superpuesta se dibuja en morado, alineada sobre la que estás viendo.";
-    else if (cmpInfo.error) out.textContent = cmpInfo.error;
-    else out.textContent = "RMSD frente a la estructura mostrada: " + fmt(cmpInfo.rmsd) + " Å (todos los átomos, tras alinear)." +
-      (cmpInfo.mirror < .05 ? " Reflejada en un espejo coincide exactamente (" + fmt(cmpInfo.mirror) + " Å): es su enantiómero." : "");
     $("enNote").textContent = f.isTraj
       ? "Trayectoria: ΔE en kcal/mol respecto al paso de menor energía. Los mínimos y máximos locales son los pasos más bajos o más altos que todos sus vecinos cercanos: los valles y las crestas de la gráfica. Haz clic o arrastra sobre la gráfica para ir a cualquier paso. En una trayectoria no se calculan poblaciones de Boltzmann, porque cada paso es una foto de la misma simulación y no un confórmero independiente."
       : "ΔE en kcal/mol respecto a la estructura más estable. Las poblaciones de Boltzmann suponen que todas las estructuras listadas coexisten en equilibrio a " + fmt(f.T, 2) + " K.";
@@ -1898,60 +1986,248 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     }
     return out;
   }
-  function drawMarks(ks, dE) {
-    const n = dE.length;
-    if (n < 8 || ks.length > 600) { $("eMarks").setAttribute("d", ""); return; }
-    const X = k => k / (n - 1) * 1000, Y = d => 196 - d / chartMax * 188;
-    $("eMarks").setAttribute("d", ks.map(k => "M" + X(k).toFixed(1) + "," + (Y(dE[k]) - 9).toFixed(1) + "V" + (Y(dE[k]) + 9).toFixed(1)).join(""));
+  // ---------- analysis chart: one metric across all structures ----------
+  const chartState = { key: "", geo: null, marks: [], marksKey: "", drag: false, moved: false, downX: 0, hover: null, kmin: -1, kmax: -1 };
+  function niceTicks(lo, hi, count) {
+    const span = hi - lo || 1, raw = span / Math.max(1, count), mag = Math.pow(10, Math.floor(Math.log10(raw))), r = raw / mag;
+    const step = (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10) * mag;
+    const ticks = [];
+    for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + step * 1e-6; v += step) ticks.push(Math.abs(v) < step * 1e-9 ? 0 : v);
+    return { ticks, step };
   }
-  $("listMode").addEventListener("change", e => { if (!state.file) return; state.file.listMode = e.target.value; state.file.listSort = undefined; renderEnergy(); });
-  $("listCount").addEventListener("change", e => { if (!state.file) return; state.file.listCount = +e.target.value; renderEnergy(); });
-  $("listSort").addEventListener("change", e => { if (!state.file) return; state.file.listSort = e.target.value; renderEnergy(); });
-
-  // Energy along the structures (min–max per pixel column so spikes survive down-sampling)
-  let chartKey = "", chartMax = 1;
-  function drawEnergyChart(dE, minK) {
-    const f = state.file, n = dE.length, box = $("eChart");
-    box.hidden = n < 8;
-    $("frameSlider").hidden = !box.hidden;
-    if (box.hidden) return;
-    box.setAttribute("aria-valuemax", String(n)); box.setAttribute("aria-valuenow", String(f.frame + 1));
-    box.setAttribute("aria-valuetext", f.frames[f.frame].label + ", ΔE " + fmtE(dE[f.frame]) + " kcal/mol");
-    let max = 0; dE.forEach(d => { if (d > max) max = d; });
-    chartMax = max || 1;
-    const key = f.uid + "|" + f.unit + "|" + n;
-    const X = k => n === 1 ? 500 : k / (n - 1) * 1000, Y = d => 196 - d / chartMax * 188;
-    if (key !== chartKey) {
-      chartKey = key;
-      const cols = Math.min(n, 500), pts = [];
-      for (let c = 0; c < cols; c++) {
-        const a = Math.floor(c * n / cols), b = Math.max(a + 1, Math.floor((c + 1) * n / cols));
-        let lo = a, hi = a;
-        for (let k = a; k < b; k++) { if (dE[k] < dE[lo]) lo = k; if (dE[k] > dE[hi]) hi = k; }
-        (lo < hi ? [lo, hi] : [hi, lo]).forEach(k => pts.push(X(k).toFixed(1) + "," + Y(dE[k]).toFixed(1)));
-      }
-      $("eLine").setAttribute("d", "M" + pts.join("L"));
-      $("eArea").setAttribute("d", "M0,200L" + pts.join("L") + "L1000,200Z");
-      $("eChartTop").textContent = chartMax < 10 ? chartMax.toFixed(2) : chartMax.toFixed(0);
-      $("eChartN").textContent = String(n);
-      $("eChartX").textContent = f.isTraj ? "paso" : "estructura";
+  const fmtTick = (v, step) => v.toFixed(Math.max(0, Math.min(4, -Math.floor(Math.log10(step) + 1e-9))));
+  let measCache = { key: "", def: null };
+  function measureDef(f) {
+    const ms = state.measure;
+    if (!ms || ms.picks.length < 2) return null;
+    const P = ms.picks;
+    if (!f.frames.every(fr => P.every(pk => pk.i < fr.atoms.length))) return null;
+    const key = f.uid + "|" + P.map(pk => pk.i + (pk.mirror ? "m" : "")).join(",");
+    if (measCache.key === key) return measCache.def;
+    const names = P.map(pk => atomName(pk.i)), sgn = P[0].mirror ? -1 : 1;
+    const vals = f.frames.map(fr => {
+      const q = P.map(pk => fr.pos[pk.i]);
+      return P.length === 2 ? q[0].distanceTo(q[1]) : P.length === 3 ? angleAt(q[0], q[1], q[2]) : sgn * dihedral(q[0], q[1], q[2], q[3]);
+    });
+    const kind = P.length === 2 ? "d" : P.length === 3 ? "∠" : "φ";
+    const def = {
+      id: "meas", short: kind + " " + names.join("–"), label: (P.length === 2 ? "distancia " : P.length === 3 ? "ángulo " : "diedro ") + names.join("–"),
+      unit: P.length === 2 ? "Å" : "°", digits: P.length === 2 ? 3 : 1, vals,
+      axis: (P.length === 2 ? "distancia (Å)" : P.length === 3 ? "ángulo (°)" : "diedro (°)")
+    };
+    measCache = { key, def };
+    return def;
+  }
+  function metricDefs(f) {
+    const n = f.frames.length, d = [];
+    if (f.hasE) d.push({ id: "dE", short: "ΔE", label: "energía relativa al mínimo", unit: "kcal/mol", digits: 2, vals: energyTable().dE, axis: "ΔE (kcal/mol)", zero: true });
+    if (n > 1 && f.rmsd.some(Number.isFinite)) d.push({ id: "rmsd", short: "RMSD", label: "RMSD frente a " + f.frames[f.refK].label, unit: "Å", digits: 3, vals: f.rmsd, axis: "RMSD vs ref. (Å)", zero: true });
+    d.push({ id: "rg", short: "Rg", label: "radio de giro (ponderado por masa)", unit: "Å", digits: 3, vals: f.rg, axis: "Rg (Å)" });
+    const md = measureDef(f);
+    if (md) d.push(md);
+    return d;
+  }
+  function renderChart() {
+    const f = state.source === "file" ? state.file : null;
+    if (!f || f.frames.length < 2) { chartState.geo = null; return; }
+    const defs = metricDefs(f);
+    const m = defs.find(x => x.id === state.metric) || defs[0];
+    state.metric = m.id;
+    setHTML($("metricSeg"), defs.map(x => '<button type="button" data-metric="' + x.id + '" aria-pressed="' + (x.id === m.id) + '" title="' + esc(x.label) + '">' + esc(x.short) + '</button>').join(""));
+    $("frameSlider").hidden = true;
+    const n = f.frames.length, line = f.isTraj || n > 60;
+    let order = null, slot = null;
+    if (!line) {
+      order = f.frames.map((_, k) => k);
+      if (f.hasE) order.sort((a, b) => f.frames[a].energy - f.frames[b].energy);
+      slot = new Array(n); order.forEach((k, s) => { slot[k] = s; });
     }
-    const x = X(f.frame);
-    $("eCur").setAttribute("x1", x); $("eCur").setAttribute("x2", x);
-    const H = $("eSvg").getBoundingClientRect().height || 84;
-    const place = (el, k) => { el.style.left = (X(k) / 10) + "%"; el.style.top = (Y(dE[k]) / 200 * H) + "px"; };
-    place($("eCurDot"), f.frame); place($("eMinDot"), minK);
+    const box = $("eChart"), svg = $("eSvg");
+    const W = Math.max(220, Math.round(box.clientWidth)), H = 168, x0 = 46, x1 = W - 10, y0 = 20, y1 = H - 30;
+    const vals = m.vals;
+    let lo = Infinity, hi = -Infinity;
+    vals.forEach(v => { if (Number.isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } });
+    if (!Number.isFinite(lo)) { lo = 0; hi = 1; }
+    if (m.zero) lo = Math.min(0, lo);
+    if (hi - lo < 1e-9) { const e = Math.abs(hi) * .05 || .5; hi += e; if (!m.zero) lo -= e; }
+    const padY = (hi - lo) * .08; hi += padY; if (!m.zero) lo -= padY;
+    const X = k => line ? x0 + k / (n - 1) * (x1 - x0) : x0 + (slot[k] + .5) / n * (x1 - x0);
+    const Y = v => y1 - (v - lo) / (hi - lo) * (y1 - y0);
+    const rungW = line ? 0 : Math.max(5, Math.min(28, (x1 - x0) / n * .72));
+    chartState.geo = { n, line, order, slot, x0, x1, y0, y1, X, Y, m, W, rungW };
+    const key = [f.uid, m.id, f.unit, W, measCache.key, chartState.marksKey, f.T].join("|");
+    if (key !== chartState.key) {
+      chartState.key = key;
+      svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+      svg.setAttribute("width", W); svg.setAttribute("height", H);
+      const F = v => v.toFixed(1);
+      let s = "";
+      const yt = niceTicks(lo, hi, 4);
+      yt.ticks.forEach(v => { if (v < lo - 1e-9 || v > hi + 1e-9) return; const y = F(Y(v)); s += '<line class="grid" x1="' + x0 + '" x2="' + x1 + '" y1="' + y + '" y2="' + y + '"/><text x="' + (x0 - 6) + '" y="' + y + '" text-anchor="end" dominant-baseline="middle">' + fmtTick(v, yt.step) + '</text>'; });
+      s += '<text class="ax-title" x="' + x0 + '" y="11">' + esc(m.axis) + '</text>';
+      if (line) {
+        const xt = niceTicks(1, n, Math.max(2, Math.floor((x1 - x0) / 72)));
+        xt.ticks.forEach(v => { if (v < 1 || v > n) return; const x = F(X(v - 1)); s += '<line class="axis" x1="' + x + '" x2="' + x + '" y1="' + y1 + '" y2="' + (y1 + 4) + '"/><text x="' + x + '" y="' + (y1 + 15) + '" text-anchor="middle">' + Math.round(v).toLocaleString("es-MX") + '</text>'; });
+      } else {
+        const every = Math.max(1, Math.ceil(n / Math.max(1, Math.floor((x1 - x0) / 20))));
+        order.forEach((k, sIdx) => { if (sIdx % every) return; s += '<text x="' + F(X(k)) + '" y="' + (y1 + 15) + '" text-anchor="middle">' + (sIdx + 1) + '</text>'; });
+      }
+      s += '<text class="ax-title" x="' + x1 + '" y="' + (H - 2) + '" text-anchor="end">' + (line ? (f.isTraj ? "paso" : "estructura") : (f.hasE ? "estructuras ordenadas por energía (1 = mínimo)" : "estructura")) + '</text>';
+      s += '<line class="axis" x1="' + x0 + '" x2="' + x1 + '" y1="' + y1 + '" y2="' + y1 + '"/>';
+      let kmin = -1, kmax = -1;
+      vals.forEach((v, k) => { if (!Number.isFinite(v)) return; if (kmin < 0 || v < vals[kmin]) kmin = k; if (kmax < 0 || v > vals[kmax]) kmax = k; });
+      if (line) {
+        // keep the lowest and highest value of every pixel column so spikes survive down-sampling
+        const cols = Math.max(1, Math.min(n, Math.round(x1 - x0))), pts = [];
+        for (let c = 0; c < cols; c++) {
+          const a = Math.floor(c * n / cols), b = Math.max(a + 1, Math.floor((c + 1) * n / cols));
+          let lk = -1, hk = -1;
+          for (let k = a; k < b && k < n; k++) { const v = vals[k]; if (!Number.isFinite(v)) continue; if (lk < 0 || v < vals[lk]) lk = k; if (hk < 0 || v > vals[hk]) hk = k; }
+          if (lk < 0) continue;
+          (lk === hk ? [lk] : lk < hk ? [lk, hk] : [hk, lk]).forEach(k => pts.push(F(X(k)) + "," + F(Y(vals[k]))));
+        }
+        if (pts.length) {
+          if (m.zero) s += '<path class="ar" d="M' + F(X(0)) + ',' + y1 + 'L' + pts.join("L") + 'L' + F(X(n - 1)) + ',' + y1 + 'Z"/>';
+          s += '<path class="ln" d="M' + pts.join("L") + '"/>';
+        }
+        if (m.id === "dE" && chartState.marks.length) s += '<path class="mk" d="' + chartState.marks.map(k => 'M' + F(X(k)) + ',' + F(Y(vals[k]) - 7) + 'V' + F(Y(vals[k]) + 7)).join("") + '"/>';
+        if (kmin >= 0) s += '<circle class="max-ring" cx="' + F(X(kmax)) + '" cy="' + F(Y(vals[kmax])) + '" r="4"/><circle class="min-ring" cx="' + F(X(kmin)) + '" cy="' + F(Y(vals[kmin])) + '" r="4"/>';
+      } else {
+        f.frames.forEach((fr, k) => {
+          const v = vals[k]; if (!Number.isFinite(v)) return;
+          const c = fr.chir || "N", x = X(k), y = Y(v);
+          s += m.id === "dE" || m.id === "rmsd"
+            ? '<line class="rung ' + c + '" x1="' + F(x - rungW / 2) + '" x2="' + F(x + rungW / 2) + '" y1="' + F(y) + '" y2="' + F(y) + '"/>'
+            : '<circle class="dot ' + c + '" cx="' + F(x) + '" cy="' + F(y) + '" r="3.5"/>';
+        });
+      }
+      if (!line && f.frames.some(fr => fr.chir)) {
+        const kinds = ["L", "D"].filter(c => f.frames.some(fr => fr.chir === c));
+        let lx = x1 - kinds.length * 34;
+        kinds.forEach(c => {
+          s += (m.id === "dE" || m.id === "rmsd")
+            ? '<line class="rung ' + c + '" x1="' + lx + '" x2="' + (lx + 12) + '" y1="7" y2="7"/>'
+            : '<circle class="dot ' + c + '" cx="' + (lx + 6) + '" cy="7" r="3.5"/>';
+          s += '<text x="' + (lx + 16) + '" y="7" dominant-baseline="middle">' + c + '</text>';
+          lx += 34;
+        });
+      }
+      $("cStatic").innerHTML = s;
+      chartState.kmin = kmin; chartState.kmax = kmax;
+      const fin = vals.filter(Number.isFinite);
+      const mean = fin.reduce((a, b) => a + b, 0) / fin.length;
+      const sd = Math.sqrt(fin.reduce((a, b) => a + (b - mean) * (b - mean), 0) / fin.length);
+      const fv = v => v.toFixed(m.digits);
+      const where = k => esc(f.isTraj ? "paso " + (k + 1) : f.frames[k].label);
+      setHTML($("cStats"),
+        '<div><dt>Mín</dt><dd><button type="button" data-k="' + kmin + '" title="Ir a ' + where(kmin) + '">' + fv(vals[kmin]) + '</button></dd></div>' +
+        '<div><dt>Media</dt><dd>' + fv(mean) + '</dd></div>' +
+        '<div><dt>Máx</dt><dd><button type="button" data-k="' + kmax + '" title="Ir a ' + where(kmax) + '">' + fv(vals[kmax]) + '</button></dd></div>' +
+        '<div><dt>σ</dt><dd>' + fv(sd) + '</dd></div>');
+    }
+    drawCursor();
+    const v = vals[f.frame];
+    box.setAttribute("aria-valuemax", String(n)); box.setAttribute("aria-valuenow", String(f.frame + 1));
+    box.setAttribute("aria-valuetext", f.frames[f.frame].label + ", " + m.short + " " + (Number.isFinite(v) ? v.toFixed(m.digits) + " " + m.unit : "sin valor"));
+    if (chartState.hover !== null && !$("cTip").hidden) showTip(chartState.hover);
   }
-  let chartDrag = false;
-  const chartPick = e => {
-    const r = $("eSvg").getBoundingClientRect(), n = state.file.frames.length;
-    const k = Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * (n - 1));
-    if (k !== state.file.frame) showFrame(k);
-  };
-  $("eSvg").addEventListener("pointerdown", e => { if (!state.file) return; stopPlay(); chartDrag = true; $("eSvg").setPointerCapture(e.pointerId); chartPick(e); });
-  $("eSvg").addEventListener("pointermove", e => { if (chartDrag) chartPick(e); });
-  $("eSvg").addEventListener("pointerup", () => { chartDrag = false; });
-  $("eSvg").addEventListener("pointercancel", () => { chartDrag = false; });
+  function drawCursor() {
+    const g = chartState.geo, f = state.file;
+    if (!g || !f) return;
+    const k = f.frame, v = g.m.vals[k], x = g.X(k).toFixed(1);
+    let s = "";
+    if (g.line) s += '<line class="cur-line" x1="' + x + '" x2="' + x + '" y1="' + g.y0 + '" y2="' + g.y1 + '"/>';
+    if (Number.isFinite(v)) {
+      const y = g.Y(v).toFixed(1);
+      if (!g.line && (g.m.id === "dE" || g.m.id === "rmsd")) s += '<line class="cur-rung" x1="' + (g.X(k) - g.rungW / 2).toFixed(1) + '" x2="' + (g.X(k) + g.rungW / 2).toFixed(1) + '" y1="' + y + '" y2="' + y + '"/>';
+      else s += '<circle class="cur-dot" cx="' + x + '" cy="' + y + '" r="4.5"/>';
+    }
+    if (chartState.hover !== null && chartState.hover !== k) { const hx = g.X(chartState.hover).toFixed(1); s += '<line class="hov-line" x1="' + hx + '" x2="' + hx + '" y1="' + g.y0 + '" y2="' + g.y1 + '"/>'; }
+    $("cDyn").innerHTML = s;
+  }
+  function chartIndexAt(clientX) {
+    const g = chartState.geo; if (!g) return null;
+    const r = $("eSvg").getBoundingClientRect();
+    const x = (clientX - r.left) * (g.W / (r.width || g.W));
+    const fx = Math.min(1, Math.max(0, (x - g.x0) / (g.x1 - g.x0)));
+    if (g.line) return Math.round(fx * (g.n - 1));
+    return g.order[Math.min(g.n - 1, Math.floor(fx * g.n))];
+  }
+  function showTip(k, cx, cy) {
+    const g = chartState.geo, f = state.file, tip = $("cTip");
+    if (!g || !f || k === null || k >= f.frames.length) { tip.hidden = true; return; }
+    const m = g.m, v = m.vals[k], fr = f.frames[k];
+    const rows = ['<b>' + esc(f.isTraj ? "Paso " + (k + 1) : fr.label) + '</b>',
+      '<span class="main">' + esc(m.short) + ' = ' + (Number.isFinite(v) ? v.toFixed(m.digits) + ' ' + m.unit : '—') + '</span>'];
+    if (m.id !== "dE" && f.hasE) rows.push('<span>ΔE = ' + fmtE(energyTable().dE[k]) + ' kcal/mol</span>');
+    if (m.id !== "rmsd" && Number.isFinite(f.rmsd[k])) rows.push('<span>RMSD = ' + f.rmsd[k].toFixed(2) + ' Å</span>');
+    if (fr.chir) rows.push('<span>Cα ' + fr.chir + '</span>');
+    tip.innerHTML = rows.join("");
+    tip.hidden = false;
+    const br = $("eChart").getBoundingClientRect();
+    const px = cx !== undefined ? cx - br.left : g.X(k), py = cy !== undefined ? cy - br.top : g.y0;
+    let x = px + 12, y = py - tip.offsetHeight - 8;
+    if (x + tip.offsetWidth > br.width) x = px - 12 - tip.offsetWidth;
+    if (x < 0) x = 0;
+    if (y < 0) y = py + 14;
+    tip.style.transform = "translate(" + Math.round(x) + "px," + Math.round(y) + "px)";
+    chartState.tipXY = [cx, cy];
+  }
+  const svgEl = $("eSvg");
+  svgEl.addEventListener("pointerdown", e => {
+    if (!state.file || !chartState.geo) return;
+    stopPlay(); chartState.drag = true; chartState.moved = false; chartState.downX = e.clientX;
+    svgEl.setPointerCapture(e.pointerId);
+  });
+  svgEl.addEventListener("pointermove", e => {
+    if (!state.file || !chartState.geo) return;
+    const k = chartIndexAt(e.clientX); if (k === null) return;
+    if (chartState.drag) {
+      if (Math.abs(e.clientX - chartState.downX) > 3) chartState.moved = true;
+      if (chartState.moved && k !== state.file.frame) showFrame(k);
+    }
+    chartState.hover = k;
+    showTip(k, e.clientX, e.clientY);
+    drawCursor();
+  });
+  svgEl.addEventListener("pointerup", e => {
+    if (!chartState.drag) return;
+    chartState.drag = false;
+    if (!chartState.moved && state.file) {
+      const k = chartIndexAt(e.clientX);
+      if (k !== null && k !== state.file.frame) { if (chartState.geo.line) showFrame(k); else animateTo(k); }
+    }
+  });
+  svgEl.addEventListener("pointercancel", () => { chartState.drag = false; });
+  svgEl.addEventListener("pointerleave", () => { chartState.hover = null; $("cTip").hidden = true; drawCursor(); });
+  $("metricSeg").addEventListener("click", e => { const b = e.target.closest("[data-metric]"); if (b) { state.metric = b.dataset.metric; renderChart(); } });
+  $("cStats").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b && state.file) { stopPlay(); animateTo(+b.dataset.k); } });
+  new ResizeObserver(() => { if (state.source === "file" && state.file && state.file.frames.length > 1) { chartState.key = ""; renderChart(); } }).observe($("eChart"));
+
+  // ---------- comparison with a second structure ----------
+  function renderCompare() {
+    const f = state.source === "file" ? state.file : null, box = $("cmpBox");
+    box.hidden = !f || f.frames.length < 2;
+    if (box.hidden) return;
+    $("cmpSel").value = state.cmp === null ? "" : String(state.cmp);
+    const sg = (x, d) => { const r = +x.toFixed(d); return r === 0 ? (0).toFixed(d) : (r > 0 ? "+" : "−") + Math.abs(r).toFixed(d); };
+    let html;
+    if (state.cmp === null) html = '<p>Elige una estructura: se dibuja en morado sobre la actual, ya alineada, y aquí ves en qué se diferencian.</p>';
+    else if (state.cmp === f.frame) html = '<p>Es la misma estructura que se muestra.</p>';
+    else if (!cmpInfo) html = '';
+    else if (cmpInfo.error) html = '<p>' + esc(cmpInfo.error) + '</p>';
+    else {
+      const a = f.frame, b = state.cmp, parts = [];
+      parts.push('<span>RMSD <b>' + cmpInfo.rmsd.toFixed(3) + ' Å</b></span>');
+      if (f.hasE) { const dE = energyTable().dE; parts.push('<span>ΔΔE <b>' + sg(dE[b] - dE[a], 3) + '</b> kcal/mol</span>'); }
+      parts.push('<span>ΔRg <b>' + sg(f.rg[b] - f.rg[a], 3) + ' Å</b></span>');
+      if (cmpInfo.mirror < .05) parts.push('<span class="mir">es su enantiómero (coincide al reflejarla)</span>');
+      else if (f.frames[a].chir && f.frames[b].chir && f.frames[a].chir !== f.frames[b].chir) parts.push('<span class="mir">' + f.frames[a].chir + ' frente a ' + f.frames[b].chir + '</span>');
+      html = parts.join("") + '<p>Diferencias de «' + esc(cmpInfo.label) + '» respecto a la estructura actual.</p>';
+    }
+    setHTML($("cmpOut"), html);
+  }
+
   $("eChart").addEventListener("keydown", e => {
     if (!state.file) return;
     const n = state.file.frames.length, k = state.file.frame, big = Math.max(1, Math.round(n / 20));
@@ -2002,8 +2278,27 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     return parts.join(" ");
   }
 
-  function setStats(items) {
-    $("srcStats").innerHTML = items.map(([v, l]) => '<span>' + (v !== "" ? '<b>' + esc(Number(v).toLocaleString("es-MX")) + '</b> ' : '') + esc(l) + '</span>').join("");
+  const UNIT_NAME = { ha: "Hartree", kcal: "kcal/mol", kj: "kJ/mol", ev: "eV" };
+  // values passed here are built from numbers and fixed words; anything taken from a file goes through esc()
+  function setSpec(rows) {
+    setHTML($("spec"), rows.map(([k, v, wide]) => '<div' + (wide ? ' class="wide"' : '') + '><dt>' + esc(k) + '</dt><dd>' + v + '</dd></div>').join(""));
+  }
+  function setKPIs(tiles) {
+    setHTML($("kpis"), tiles.map(x => {
+      const longU = x.u && x.u.length > 2;
+      return '<div class="kpi ' + (x.cls || "") + '"><div class="k">' + esc(x.k) + (longU ? ' <em>· ' + esc(x.u) + '</em>' : '') + '</div><div class="v">' + esc(x.v) +
+      (x.u && !longU ? '<small>' + esc(x.u) + '</small>' : '') + '</div><div class="s" title="' + esc(x.s || "") + '">' + esc(x.s || "") + '</div></div>';
+    }).join(""));
+  }
+  let rankCache = { key: "", r: null };
+  function energyRank(f) {
+    const key = f.uid + "|" + f.unit;
+    if (rankCache.key !== key) {
+      const idx = f.frames.map((_, k) => k).sort((a, b) => f.frames[a].energy - f.frames[b].energy);
+      const r = new Array(idx.length); idx.forEach((k, i) => { r[k] = i + 1; });
+      rankCache = { key, r };
+    }
+    return rankCache.r;
   }
   function setLoading(msg) { $("loadStatus").hidden = !msg; $("loadText").textContent = msg || ""; }
   $("errClose").addEventListener("click", () => showError(""));
@@ -2036,6 +2331,7 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       uid: ++fileSeq,
       name: files.length === 1 ? files[0].name : files.length + " archivos", nFiles: files.length, fileNames: files.map(f => f.name), fmtLabel: exts.length === 1 ? exts[0] : "VARIOS",
       frames, frame: prep.hasE && !prep.isTraj ? prep.refK : 0, hasE: prep.hasE, pairs: prep.pairs, isTraj: prep.isTraj,
+      rmsd: prep.rmsd, rg: prep.rg, refK: prep.refK,
       unit: prep.hasE ? (frames[0].unitHint || guessUnit(frames)) : "kcal", T: 298.15
     };
     const dup = recent.findIndex(r => r.name === fileObj.name);
@@ -2055,6 +2351,7 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     state.source = "file";
     state.file = fileObj;
     state.sel = null; state.group = null; state.cmp = null;
+    state.metric = fileObj.hasE ? "dE" : "rmsd";
     $("enT").value = String(fileObj.T);
     const heavy = frames[0].atoms.filter(a => a.el !== "H").length;
     state.labels = heavy <= 40;
